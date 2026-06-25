@@ -3,7 +3,7 @@ import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyDao2U8vEi8OGLOBFM9NcbgJq_bWsd181s",
+  apiKey:            "AIzaSyDao2U8vEi8OGlOBFM9NcbgJq_bWsd181s",
   authDomain:        "snake-store-168ca.firebaseapp.com",
   projectId:         "snake-store-168ca",
   storageBucket:     "snake-store-168ca.firebasestorage.app",
