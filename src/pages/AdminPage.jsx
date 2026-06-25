@@ -8,7 +8,7 @@ import { CategoryForm }  from '../components/CategoryForm'
 import { SalesModal }    from '../components/SalesModal'
 import { ReportsPage }   from './ReportsPage'
 import { subscribeProducts, subscribeCategories, subscribeVentas, deleteCategory } from '../utils/db'
-import { clearAdminSession } from '../utils/helpers'
+// auth handled by Firebase '../utils/helpers'
 
 const VIEWS = ['products', 'categories', 'ventas', 'reportes']
 const VIEW_LABELS = { products:'Productos', categories:'Categorías', ventas:'Registrar venta', reportes:'Reportes' }
@@ -67,7 +67,7 @@ export function AdminPage({ onLogout, onCatalog }) {
           <div style={{ width:1, height:24, background:'var(--border)', margin:'0 4px' }} />
           <Btn variant="success" size="sm" onClick={() => setShowSales(true)}>🛒 Registrar venta</Btn>
           <button className="nav-btn" onClick={onCatalog}>Catálogo ↗</button>
-          <Btn variant="ghost" size="sm" onClick={() => { clearAdminSession(); onLogout() }}>Salir</Btn>
+          <Btn variant="ghost" size="sm" onClick={() => { onLogout() }}>Salir</Btn>
         </nav>
       </header>
 

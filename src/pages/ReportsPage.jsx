@@ -1,10 +1,75 @@
 // src/pages/ReportsPage.jsx
 import { useState, useMemo } from 'react'
+import * as XLSX from 'xlsx'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, CartesianGrid, Legend
+  LineChart, Line,
 } from 'recharts'
 import { formatCurrency, formatDate, formatDateTime } from '../utils/helpers'
+
+function exportToExcel(ventas, period) {
+  const wb = XLSX.utils.book_new()
+
+  // ── Hoja 1: Historial de ventas ──────────────
+  const ventasData = ventas.map(v => ({
+    'Fecha':        new Date(v.fecha).toLocaleDateString('es-PE'),
+    'Hora':         new Date(v.fecha).toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' }),
+    'Productos':    v.items.map(i => `${i.productName} x${i.qty}`).join(', '),
+    'Unidades':     v.items.reduce((s, i) => s + i.qty, 0),
+    'Total (S/)':   parseFloat((v.total || 0).toFixed(2)),
+  }))
+  const ws1 = XLSX.utils.json_to_sheet(ventasData)
+  ws1['!cols'] = [{ wch: 14 }, { wch: 8 }, { wch: 50 }, { wch: 10 }, { wch: 12 }]
+  XLSX.utils.book_append_sheet(wb, ws1, 'Ventas')
+
+  // ── Hoja 2: Detalle por producto ─────────────
+  const detalle = []
+  ventas.forEach(v => {
+    v.items.forEach(i => {
+      detalle.push({
+        'Fecha':         new Date(v.fecha).toLocaleDateString('es-PE'),
+        'Hora':          new Date(v.fecha).toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' }),
+        'Producto':      i.productName,
+        'Cantidad':      i.qty,
+        'Precio unit.':  parseFloat(i.price.toFixed(2)),
+        'Subtotal (S/)': parseFloat(i.subtotal.toFixed(2)),
+      })
+    })
+  })
+  const ws2 = XLSX.utils.json_to_sheet(detalle)
+  ws2['!cols'] = [{ wch: 14 }, { wch: 8 }, { wch: 30 }, { wch: 10 }, { wch: 13 }, { wch: 13 }]
+  XLSX.utils.book_append_sheet(wb, ws2, 'Detalle por producto')
+
+  // ── Hoja 3: Resumen por día ──────────────────
+  const byDay = {}
+  ventas.forEach(v => {
+    const d = new Date(v.fecha).toLocaleDateString('es-PE')
+    if (!byDay[d]) byDay[d] = { 'Fecha': d, 'N° Ventas': 0, 'Unidades': 0, 'Ingresos (S/)': 0 }
+    byDay[d]['N° Ventas']++
+    byDay[d]['Unidades']     += v.items.reduce((s, i) => s + i.qty, 0)
+    byDay[d]['Ingresos (S/)'] = parseFloat((byDay[d]['Ingresos (S/)'] + (v.total || 0)).toFixed(2))
+  })
+  const ws3 = XLSX.utils.json_to_sheet(Object.values(byDay))
+  ws3['!cols'] = [{ wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 14 }]
+  XLSX.utils.book_append_sheet(wb, ws3, 'Resumen por día')
+
+  // ── Hoja 4: Productos más vendidos ───────────
+  const byProduct = {}
+  ventas.forEach(v => v.items.forEach(i => {
+    if (!byProduct[i.productName]) byProduct[i.productName] = { 'Producto': i.productName, 'Unidades vendidas': 0, 'Ingresos (S/)': 0 }
+    byProduct[i.productName]['Unidades vendidas'] += i.qty
+    byProduct[i.productName]['Ingresos (S/)']      = parseFloat((byProduct[i.productName]['Ingresos (S/)'] + i.subtotal).toFixed(2))
+  }))
+  const topProds = Object.values(byProduct).sort((a, b) => b['Unidades vendidas'] - a['Unidades vendidas'])
+  const ws4 = XLSX.utils.json_to_sheet(topProds)
+  ws4['!cols'] = [{ wch: 30 }, { wch: 18 }, { wch: 14 }]
+  XLSX.utils.book_append_sheet(wb, ws4, 'Ranking productos')
+
+  // Descargar
+  const periodLabel = { dia:'Hoy', semana:'Semana', mes:'Mes', anio:'Año', todo:'Todo' }[period] || period
+  const fecha = new Date().toLocaleDateString('es-PE').replace(/\//g, '-')
+  XLSX.writeFile(wb, `Snake_Store_Ventas_${periodLabel}_${fecha}.xlsx`)
+}
 
 const PERIODS = [
   { key: 'dia',    label: 'Hoy' },
@@ -89,13 +154,29 @@ export function ReportsPage({ ventas }) {
 
   return (
     <div>
-      {/* Period tabs */}
-      <div className="period-tabs">
-        {PERIODS.map(p => (
-          <button key={p.key} className={`period-tab ${period === p.key ? 'active' : ''}`} onClick={() => setPeriod(p.key)}>
-            {p.label}
-          </button>
-        ))}
+      {/* Period tabs + Export */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12, marginBottom:'1.5rem' }}>
+        <div className="period-tabs" style={{ marginBottom:0 }}>
+          {PERIODS.map(p => (
+            <button key={p.key} className={`period-tab ${period === p.key ? 'active' : ''}`} onClick={() => setPeriod(p.key)}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => exportToExcel(filtered, period)}
+          disabled={filtered.length === 0}
+          style={{
+            display:'inline-flex', alignItems:'center', gap:8,
+            background: filtered.length === 0 ? 'var(--border)' : '#1d6f42',
+            color: filtered.length === 0 ? 'var(--muted)' : '#fff',
+            border:'none', borderRadius:'var(--r)', padding:'10px 20px',
+            fontSize:14, fontWeight:500, cursor: filtered.length === 0 ? 'not-allowed' : 'pointer',
+            transition:'opacity .15s', fontFamily:'var(--fb)',
+          }}
+        >
+          📊 Exportar a Excel ({filtered.length} ventas)
+        </button>
       </div>
 
       {/* Stats cards */}
