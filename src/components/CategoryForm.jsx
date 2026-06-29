@@ -29,11 +29,26 @@ export function CategoryForm({ onClose, editing }) {
   return (
     <Modal onClose={onClose}>
       <h2 className="modal-title">{editing?'EDITAR CATEGORÍA':'NUEVA CATEGORÍA'}</h2>
+
       <Field label="Ícono">
-        <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-          {ICONS.map(ic => <button key={ic} onClick={() => setIcon(ic)} style={{ width:40, height:40, fontSize:20, borderRadius:8, border:`2px solid ${ic===icon?'var(--accent)':'var(--border)'}`, background:ic===icon?'var(--accent-dim)':'var(--black)', cursor:'pointer' }}>{ic}</button>)}
-        </div>
-      </Field>
+      <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:12 }}>
+        {ICONS.map(ic => (
+        <button key={ic} onClick={() => setIcon(ic)} style={{ width:40, height:40, fontSize:20, borderRadius:8, border:`2px solid ${ic===icon?'var(--accent)':'var(--border)'}`, background:ic===icon?'var(--accent-dim)':'var(--black)', cursor:'pointer' }}>{ic}</button>
+      ))}
+      </div>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <span style={{ fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.08em', whiteSpace:'nowrap' }}>O escribe uno:</span>
+          <input
+            className="input"
+            value={icon}
+            onChange={e => setIcon(e.target.value)}
+            placeholder="🩴"
+            maxLength={4}
+            style={{ width:80, textAlign:'center', fontSize:24 }}
+          />
+        <span style={{ fontSize:28 }}>{icon}</span>
+      </div>
+    </Field>
       <Field label="Nombre"><input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Accesorios" maxLength={40} /></Field>
       <Field label="Descripción (opcional)"><textarea className="input" value={desc} onChange={e => setDesc(e.target.value)} placeholder="Breve descripción..." maxLength={120} /></Field>
       <div className="form-actions">
