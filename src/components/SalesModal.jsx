@@ -17,7 +17,7 @@ export function SalesModal({ products, categories, onClose }) {
       if (exists) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i)
       return [...prev, { ...product, qty: 1 }]
     })
-    setScanning(false) // cerrar escáner luego de cada scan
+    // No cerrar el escáner — sigue escaneando
   }
 
   function changeQty(id, delta) {
