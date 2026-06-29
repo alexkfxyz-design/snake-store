@@ -2,8 +2,24 @@ import { useState } from 'react'
 import { Modal, Btn, Field } from './UI'
 import { addCategory, updateCategory } from '../utils/db'
 
-const ICONS = ['👕','👗','👒','🧣','🧤','💍','👜','🕶️','🧢','🩴','🎒','✨','💫','🪡','🧵','🌂','💄','👠','🧴','🥻']
-
+jsconst ICONS = [
+  // Ropa superior
+  '👕','👔','🧥','🥼','👗','👘','🥻','🩱','👙','🎽','🥋','👚',
+  // Ropa inferior
+  '👖','🩲','🩳',
+  // Accesorios cabeza
+  '🧢','👒','🎩','⛑️','👑',
+  // Calzado
+  '👟','👞','👠','👡','👢','🥾','🥿','🩰',
+  // Bolsos y carteras
+  '👜','👝','🎒','🧳','💼',
+  // Joyería y accesorios
+  '💍','📿','💎','🎀','🧣','🧤','🕶️','🥽','⌚','💄',
+  // Textiles y costura
+  '🧵','🧶','🧷','✂️','🌂','☂️',
+  // Otros
+  '👒','🎗️','🛍️','🏷️','✨','💫','🌟','⭐'
+]
 export function CategoryForm({ onClose, editing }) {
   const [name,   setName]   = useState(editing?.name||'')
   const [desc,   setDesc]   = useState(editing?.description||'')
