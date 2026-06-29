@@ -81,15 +81,17 @@ export function CatalogPage({ onAdmin }) {
   return (
     <div style={{ minHeight:'100vh', background:'var(--black)' }}>
       {/* Header */}
-      <header style={{ borderBottom:'1px solid var(--border)', padding:'0 1.5rem', display:'flex', alignItems:'center', justifyContent:'space-between', height:60, position:'sticky', top:0, background:'var(--black)', zIndex:100, gap:12 }}>
-        <h1 style={{ fontFamily:'var(--fd)', fontSize:28, letterSpacing:'.12em', color:'var(--accent)', lineHeight:1, flexShrink:0 }}>UNDERGROUND STYLE</h1>
-        <input
-          style={{ flex:1, maxWidth:320, background:'var(--panel)', border:'1px solid var(--border)', borderRadius:20, padding:'8px 16px', color:'var(--white)', fontSize:13, outline:'none' }}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar..."
+      <header style={{ borderBottom:'1px solid var(--border)', padding:'12px 1.5rem', position:'sticky', top:0, background:'var(--black)', zIndex:100 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+          <h1 style={{ fontFamily:'var(--fd)', fontSize:'clamp(20px, 5vw, 32px)', letterSpacing:'.12em', color:'var(--accent)', lineHeight:1 }}>UNDERGROUND STYLE</h1>
+          <button onClick={onAdmin} style={{ color:'var(--muted)', fontSize:13, cursor:'pointer', background:'none', border:'none' }}>Admin ↗</button>
+        </div>
+      <input
+        style={{ width:'100%', background:'var(--panel)', border:'1px solid var(--border)', borderRadius:20, padding:'8px 16px', color:'var(--white)', fontSize:13, outline:'none' }}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Buscar productos..."
         />
-        <button onClick={onAdmin} style={{ color:'var(--muted)', fontSize:13, cursor:'pointer', background:'none', border:'none', flexShrink:0 }}>Admin ↗</button>
       </header>
 
       {/* Filtros por categoría */}
