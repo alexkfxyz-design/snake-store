@@ -7,7 +7,7 @@ export function ProductCard({ product, category, onClick }) {
     <article className="card card-clickable" onClick={onClick}>
       <div style={{ height:180, background:'#1a1a1a', position:'relative', overflow:'hidden' }}>
         {product.image
-          ? <img src={product.image} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          ? <img src={product.image} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'contain', background:'#111' }} />
           : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:48, opacity:.2 }}>{category?.icon||'📦'}</div>
         }
         {s !== 'ok' && <div style={{ position:'absolute', top:8, right:8, background:s==='out'?'var(--danger)':'var(--warning)', color:'#000', fontSize:10, fontWeight:700, borderRadius:20, padding:'3px 8px' }}>{s==='out'?'AGOTADO':'POCAS'}</div>}
