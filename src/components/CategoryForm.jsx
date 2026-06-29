@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Modal, Btn, Field } from './UI'
 import { addCategory, updateCategory } from '../utils/db'
 
-jsconst ICONS = [
+const ICONS = [
   // Ropa superior
   '👕','👔','🧥','🥼','👗','👘','🥻','🩱','👙','🎽','🥋','👚',
   // Ropa inferior
