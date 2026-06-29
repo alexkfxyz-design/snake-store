@@ -1,4 +1,3 @@
-// src/components/ProductCard.jsx
 import { useState } from 'react'
 import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel } from '../utils/helpers'
 
