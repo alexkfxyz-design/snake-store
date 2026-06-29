@@ -36,7 +36,7 @@ export function LoginPage({ onLogin, onCatalog }) {
   return (
     <div className="login-page">
       <div className="login-box">
-        <h1 className="login-logo">SNAKE</h1>
+        <h1 className="login-logo">UNDERGROUND</h1>
         <p className="login-sub">Panel de administración — solo personal autorizado</p>
 
         {error && <div className="login-error">⚠ {error}</div>}
