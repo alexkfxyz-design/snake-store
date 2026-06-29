@@ -55,7 +55,7 @@ export function AdminPage({ onLogout, onCatalog }) {
       {/* Header */}
       <header className="header">
         <div style={{ display:'flex', alignItems:'center', gap:'1.25rem' }}>
-          <h1 className="header-logo">SNAKE</h1>
+          <h1 className="header-logo">UNDERGROUND STYLE</h1>
           <span className="header-tag">Admin</span>
         </div>
         <nav className="header-nav" style={{ flexWrap:'wrap', gap:4 }}>

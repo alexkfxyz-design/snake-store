@@ -82,7 +82,7 @@ export function CatalogPage({ onAdmin }) {
     <div style={{ minHeight:'100vh', background:'var(--black)' }}>
       {/* Header */}
       <header style={{ borderBottom:'1px solid var(--border)', padding:'0 1.5rem', display:'flex', alignItems:'center', justifyContent:'space-between', height:60, position:'sticky', top:0, background:'var(--black)', zIndex:100, gap:12 }}>
-        <h1 style={{ fontFamily:'var(--fd)', fontSize:28, letterSpacing:'.12em', color:'var(--accent)', lineHeight:1, flexShrink:0 }}>SNAKE</h1>
+        <h1 style={{ fontFamily:'var(--fd)', fontSize:28, letterSpacing:'.12em', color:'var(--accent)', lineHeight:1, flexShrink:0 }}>UNDERGROUND STYLE</h1>
         <input
           style={{ flex:1, maxWidth:320, background:'var(--panel)', border:'1px solid var(--border)', borderRadius:20, padding:'8px 16px', color:'var(--white)', fontSize:13, outline:'none' }}
           value={search}
@@ -172,7 +172,7 @@ export function CatalogPage({ onAdmin }) {
 
       {/* Footer */}
       <footer style={{ borderTop:'1px solid var(--border)', padding:'1.5rem', textAlign:'center', color:'var(--muted)', fontSize:13 }}>
-        <span style={{ fontFamily:'var(--fd)', fontSize:18, color:'var(--accent)', letterSpacing:'.1em', marginRight:10 }}>SNAKE</span>
+        <span style={{ fontFamily:'var(--fd)', fontSize:18, color:'var(--accent)', letterSpacing:'.1em', marginRight:10 }}>UNDERGROUND STYLE</span>
         Ropa y accesorios
       </footer>
 
