@@ -13,32 +13,35 @@ export function ProductForm({ categories, onClose, editing }) {
   const fileRef = useRef()
 
   function handleImage(e) {
-    const file = e.target.files[0]; if(!file) return
-    const r = new FileReader(); r.onload = ev => setImage(ev.target.result); r.readAsDataURL(file)
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX = 800
+        let w = img.width, h = img.height
+        if (w > MAX) { h = h * MAX / w; w = MAX }
+        if (h > MAX) { w = w * MAX / h; h = MAX }
+        canvas.width = w
+        canvas.height = h
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+        setImage(canvas.toDataURL('image/jpeg', 0.7))
+      }
+      img.src = ev.target.result
+    }
+    reader.readAsDataURL(file)
   }
 
-  function handleImage(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  
-  const reader = new FileReader()
-  reader.onload = ev => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const MAX = 800
-      let w = img.width, h = img.height
-      if (w > MAX) { h = h * MAX / w; w = MAX }
-      if (h > MAX) { w = w * MAX / h; h = MAX }
-      canvas.width = w
-      canvas.height = h
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
-      setImage(canvas.toDataURL('image/jpeg', 0.7))
-    }
-    img.src = ev.target.result
+  async function handleSubmit() {
+    if (!name.trim() || !price) return
+    setSaving(true)
+    const data = { name:name.trim(), description:desc.trim(), price:parseFloat(price), stock:parseInt(stock)||0, categoryId:catId, image }
+    editing ? await updateProduct(editing.id, data) : await addProduct(data)
+    setSaving(false)
+    onClose()
   }
-  reader.readAsDataURL(file)
-}
 
   return (
     <Modal onClose={onClose}>
