@@ -1,22 +1,17 @@
 // src/pages/AdminPage.jsx
 import { useState, useEffect } from 'react'
-import { Btn, Loading } from '../components/UI'
-import { ProductCard }   from '../components/ProductCard'
+import { Btn } from '../components/UI'
+import { ProductCard } from '../components/ProductCard'
 import { ProductDetail } from '../components/ProductDetail'
-import { ProductForm }   from '../components/ProductForm'
-import { CategoryForm }  from '../components/CategoryForm'
-import { SalesModal }    from '../components/SalesModal'
-import { ReportsPage }   from './ReportsPage'
-import { subscribeProducts, subscribeCategories, subscribeVentas, deleteCategory } from '../utils/db'
-// auth handled by Firebase '../utils/helpers'
-
-const VIEWS = ['products', 'categories', 'ventas', 'reportes']
-const VIEW_LABELS = { products:'Productos', categories:'Categorías', ventas:'Registrar venta', reportes:'Reportes' }
+import { ProductForm } from '../components/ProductForm'
+import { CategoryForm } from '../components/CategoryForm'
+import { subscribeProducts, subscribeCategories, deleteCategory } from '../utils/db'
+import { clearAdminSession } from '../utils/helpers'
+import { Loading } from '../components/UI'
 
 export function AdminPage({ onLogout, onCatalog }) {
   const [products,   setProducts]   = useState([])
   const [categories, setCategories] = useState([])
-  const [ventas,     setVentas]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [view,       setView]       = useState('products')
   const [modal,      setModal]      = useState(null)
@@ -24,13 +19,11 @@ export function AdminPage({ onLogout, onCatalog }) {
   const [editing,    setEditing]    = useState(null)
   const [search,     setSearch]     = useState('')
   const [filterCat,  setFilterCat]  = useState('all')
-  const [showSales,  setShowSales]  = useState(false)
 
   useEffect(() => {
-    const u1 = subscribeProducts(data   => { setProducts(data);   setLoading(false) })
+    const u1 = subscribeProducts(data  => { setProducts(data); setLoading(false) })
     const u2 = subscribeCategories(data => setCategories(data))
-    const u3 = subscribeVentas(data     => setVentas(data))
-    return () => { u1(); u2(); u3() }
+    return () => { u1(); u2() }
   }, [])
 
   const filtered = products.filter(p => {
@@ -45,50 +38,39 @@ export function AdminPage({ onLogout, onCatalog }) {
     outStock: products.filter(p => p.stock === 0).length,
   }
 
-  const ventasHoy = ventas.filter(v => new Date(v.fecha).toDateString() === new Date().toDateString())
-  const ingresosHoy = ventasHoy.reduce((s, v) => s + (v.total || 0), 0)
-
   if (loading) return <Loading text="Conectando con Firebase..." />
 
   return (
     <div className="app">
-      {/* Header */}
       <header className="header">
         <div style={{ display:'flex', alignItems:'center', gap:'1.25rem' }}>
-          <h1 className="header-logo">UNDERGROUND STYLE</h1>
-          <span className="header-tag">Admin</span>
+          <h1 className="header-logo">SNAKE</h1>
+          <span className="header-tag">Admin Panel</span>
         </div>
-        <nav className="header-nav" style={{ flexWrap:'wrap', gap:4 }}>
-          {['products','categories','reportes'].map(v => (
-            <button key={v} className={`nav-btn ${view===v?'active':''}`} onClick={() => setView(v)}>
-              {VIEW_LABELS[v]}
-            </button>
+        <nav className="header-nav">
+          {[['products','Productos'],['categories','Categorías']].map(([v,label]) => (
+            <button key={v} className={`nav-btn ${view===v?'active':''}`} onClick={() => setView(v)}>{label}</button>
           ))}
-          <div style={{ width:1, height:24, background:'var(--border)', margin:'0 4px' }} />
-          <Btn variant="success" size="sm" onClick={() => setShowSales(true)}>🛒 Registrar venta</Btn>
-          <button className="nav-btn" onClick={onCatalog}>Catálogo ↗</button>
-          <Btn variant="ghost" size="sm" onClick={() => { onLogout() }}>Salir</Btn>
+          <div style={{ width:1, height:24, background:'var(--border)', margin:'0 8px' }} />
+          <button className="nav-btn" onClick={onCatalog}>Ver catálogo ↗</button>
+          <Btn variant="ghost" size="sm" onClick={() => { clearAdminSession(); onLogout() }}>Salir</Btn>
         </nav>
       </header>
 
       <main className="main">
-        {/* Stats */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:12, marginBottom:'1.75rem' }}>
+        <div className="stats-grid">
           {[
-            { label:'Productos',    value:stats.total,           color:'var(--accent)'   },
-            { label:'Stock bajo',   value:stats.lowStock,        color:'var(--warning)'  },
-            { label:'Sin stock',    value:stats.outStock,        color:'var(--danger)'   },
-            { label:'Ventas hoy',   value:ventasHoy.length,      color:'var(--success)'  },
-            { label:'Ingresos hoy', value:`S/${ingresosHoy.toFixed(2)}`, color:'var(--blue)' },
+            { label:'Productos totales', value:stats.total,    color:'var(--accent)'  },
+            { label:'Stock bajo',        value:stats.lowStock, color:'var(--warning)' },
+            { label:'Sin stock',         value:stats.outStock, color:'var(--danger)'  },
           ].map(s => (
             <div key={s.label} className="stat-card">
               <p className="stat-label">{s.label}</p>
-              <p className="stat-value" style={{ color:s.color, fontSize:s.label==='Ingresos hoy'?'28px':undefined }}>{s.value}</p>
+              <p className="stat-value" style={{ color:s.color }}>{s.value}</p>
             </div>
           ))}
         </div>
 
-        {/* PRODUCTOS */}
         {view === 'products' && (
           <>
             <div className="toolbar">
@@ -100,7 +82,7 @@ export function AdminPage({ onLogout, onCatalog }) {
               <Btn onClick={() => { setEditing(null); setModal('product') }}>+ Nuevo producto</Btn>
             </div>
             {filtered.length === 0
-              ? <div className="empty"><div className="empty-icon">📦</div><p className="empty-text">{products.length === 0 ? '¡Crea el primer producto!' : 'Sin resultados.'}</p></div>
+              ? <div className="empty"><div className="empty-icon">📦</div><p className="empty-text">{products.length === 0 ? 'No hay productos. ¡Crea el primero!' : 'Sin resultados.'}</p></div>
               : <div className="products-grid">
                   {filtered.map(p => (
                     <ProductCard key={p.id} product={p} category={categories.find(c => c.id === p.categoryId)} onClick={() => setDetail(p)} />
@@ -110,7 +92,6 @@ export function AdminPage({ onLogout, onCatalog }) {
           </>
         )}
 
-        {/* CATEGORÍAS */}
         {view === 'categories' && (
           <>
             <div className="section-header">
@@ -143,12 +124,8 @@ export function AdminPage({ onLogout, onCatalog }) {
             }
           </>
         )}
-
-        {/* REPORTES */}
-        {view === 'reportes' && <ReportsPage ventas={ventas} />}
       </main>
 
-      {/* Modals */}
       {modal === 'category' && <CategoryForm onClose={() => setModal(null)} editing={editing} />}
       {modal === 'product'  && <ProductForm categories={categories} onClose={() => setModal(null)} editing={editing} />}
       {detail && (
@@ -157,13 +134,6 @@ export function AdminPage({ onLogout, onCatalog }) {
           category={categories.find(c => c.id === detail.categoryId)}
           onClose={() => setDetail(null)}
           onEdit={p => { setDetail(null); setEditing(p); setModal('product') }}
-        />
-      )}
-      {showSales && (
-        <SalesModal
-          products={products}
-          categories={categories}
-          onClose={() => setShowSales(false)}
         />
       )}
     </div>

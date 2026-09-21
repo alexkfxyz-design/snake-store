@@ -1,14 +1,13 @@
-// src/components/UI.jsx
-export function Modal({ children, onClose, large = false }) {
+// src/components/Modal.jsx
+export function Modal({ children, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className={`modal-box ${large ? 'modal-box-lg' : ''}`} onClick={e => e.stopPropagation()}>
-        {children}
-      </div>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>{children}</div>
     </div>
   )
 }
 
+// src/components/Btn.jsx
 export function Btn({ children, onClick, variant = 'primary', size = '', type = 'button', style = {}, disabled = false }) {
   const cls = ['btn', `btn-${variant}`, size && `btn-${size}`].filter(Boolean).join(' ')
   return (
@@ -20,6 +19,7 @@ export function Btn({ children, onClick, variant = 'primary', size = '', type = 
   )
 }
 
+// src/components/Field.jsx
 export function Field({ label, children }) {
   return (
     <div className="field">
@@ -29,6 +29,7 @@ export function Field({ label, children }) {
   )
 }
 
+// src/components/Loading.jsx
 export function Loading({ text = 'Cargando...' }) {
   return (
     <div className="loading">

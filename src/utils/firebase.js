@@ -1,17 +1,15 @@
+// src/utils/firebase.js
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
- 
+
 const firebaseConfig = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey:            "AIzaSyDao2U8vEi8OGLOBFM9NcbgJq_bWsd181s",
+  authDomain:        "snake-store-168ca.firebaseapp.com",
+  projectId:         "snake-store-168ca",
+  storageBucket:     "snake-store-168ca.firebasestorage.app",
+  messagingSenderId: "281656007665",
+  appId:             "1:281656007665:web:3039a3884d2e0322250250"
 }
- 
+
 const app = initializeApp(firebaseConfig)
-export const db   = getFirestore(app)
-export const auth = getAuth(app)
- 
+export const db = getFirestore(app)

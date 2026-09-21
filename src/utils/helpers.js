@@ -1,3 +1,13 @@
+// src/utils/helpers.js
+
+export const ADMIN_USER = 'admin'
+export const ADMIN_PASS = 'snake2024'
+
+export const checkAdminLogin  = (u, p) => u === ADMIN_USER && p === ADMIN_PASS
+export const isAdminLoggedIn  = () => sessionStorage.getItem('snake_admin') === 'true'
+export const setAdminSession  = () => sessionStorage.setItem('snake_admin', 'true')
+export const clearAdminSession = () => sessionStorage.removeItem('snake_admin')
+
 export const formatPrice = v => parseFloat(v || 0).toFixed(2)
 
 export const getProductUrl = id =>
@@ -9,24 +19,12 @@ export function getStockStatus(stock) {
   return 'ok'
 }
 
-export const getStockBadgeClass = stock => {
+export function getStockBadgeClass(stock) {
   const s = getStockStatus(stock)
   return s === 'out' ? 'badge badge-danger' : s === 'low' ? 'badge badge-warning' : 'badge badge-success'
 }
 
-export const getStockLabel = stock => {
+export function getStockLabel(stock) {
   const s = getStockStatus(stock)
   return s === 'out' ? 'Sin stock' : s === 'low' ? `Últimas ${stock} uds.` : `${stock} en stock`
-}
-
-export function formatCurrency(v) {
-  return `S/ ${parseFloat(v || 0).toFixed(2)}`
-}
-
-export function formatDate(ts) {
-  return new Date(ts).toLocaleDateString('es-PE', { day:'2-digit', month:'short', year:'numeric' })
-}
-
-export function formatDateTime(ts) {
-  return new Date(ts).toLocaleString('es-PE', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
 }

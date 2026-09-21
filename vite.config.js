@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/snake-store/',
+  base: '/snake-store/',  // ← nombre de tu repo en GitHub
 })
