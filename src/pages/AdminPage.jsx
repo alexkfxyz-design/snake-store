@@ -8,6 +8,7 @@ import { CategoryForm }  from '../components/CategoryForm'
 import { SalesModal }    from '../components/SalesModal'
 import { ReportsPage }   from './ReportsPage'
 import { subscribeProducts, subscribeCategories, subscribeVentas, deleteCategory } from '../utils/db'
+import { needsImageMigration, migrateProductImages } from '../utils/images'
 // auth handled by Firebase '../utils/helpers'
 
 const VIEWS = ['products', 'categories', 'ventas', 'reportes']
@@ -25,9 +26,13 @@ export function AdminPage({ onLogout, onCatalog }) {
   const [search,     setSearch]     = useState('')
   const [filterCat,  setFilterCat]  = useState('all')
   const [showSales,  setShowSales]  = useState(false)
+  const [migration,  setMigration]  = useState(null)   // { done, failed, total, running }
 
   useEffect(() => {
-    const u1 = subscribeProducts(data   => { setProducts(data);   setLoading(false) })
+    const u1 = subscribeProducts(
+      data => { setProducts(data); setLoading(false) },
+      err  => { console.error('[Admin]', err); alert('Error al cargar productos: ' + (err.code || err.message)); setLoading(false) }
+    )
     const u2 = subscribeCategories(data => setCategories(data))
     const u3 = subscribeVentas(data     => setVentas(data))
     return () => { u1(); u2(); u3() }
@@ -47,6 +52,15 @@ export function AdminPage({ onLogout, onCatalog }) {
 
   const ventasHoy = ventas.filter(v => new Date(v.fecha).toDateString() === new Date().toDateString())
   const ingresosHoy = ventasHoy.reduce((s, v) => s + (v.total || 0), 0)
+
+  const pendingImages = products.filter(needsImageMigration).length
+
+  async function runMigration() {
+    if (!window.confirm(`Se optimizarán ${pendingImages} producto(s). No cierres la página hasta que termine. ¿Continuar?`)) return
+    setMigration({ done:0, failed:0, total:pendingImages, running:true })
+    const res = await migrateProductImages(products, prog => setMigration({ ...prog, running:true }))
+    setMigration({ ...res, running:false })
+  }
 
   if (loading) return <Loading text="Conectando con Firebase..." />
 
@@ -72,6 +86,22 @@ export function AdminPage({ onLogout, onCatalog }) {
       </header>
 
       <main className="main">
+        {/* Optimización de imágenes (productos antiguos) */}
+        {(pendingImages > 0 || migration) && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', padding:'12px 16px', marginBottom:'1.25rem', borderRadius:'var(--r)', border:'1px solid var(--warning-b)', background:'var(--warning-bg)', color:'var(--warning)', fontSize:14 }}>
+            <span>
+              {migration?.running
+                ? `⏳ Optimizando imágenes... ${migration.done + migration.failed} de ${migration.total}`
+                : migration && pendingImages === 0
+                  ? `✓ Imágenes optimizadas (${migration.done}). El catálogo ahora carga mucho más rápido.`
+                  : `⚡ ${pendingImages} producto(s) tienen imágenes pesadas que hacen lento el catálogo.${migration?.failed ? ` (${migration.failed} fallaron, reintenta)` : ''}`}
+            </span>
+            {migration && !migration.running && pendingImages === 0
+              ? <Btn variant="ghost" size="sm" onClick={() => setMigration(null)}>Cerrar</Btn>
+              : <Btn size="sm" onClick={runMigration} disabled={migration?.running}>{migration?.running ? 'Optimizando...' : 'Optimizar ahora'}</Btn>}
+          </div>
+        )}
+
         {/* Stats */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:12, marginBottom:'1.75rem' }}>
           {[

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Btn, Loading } from '../components/UI'
-import { subscribeProducts, subscribeCategories } from '../utils/db'
+import { subscribeProduct, getCategory } from '../utils/db'
+import { useFullImage } from '../utils/images'
 import { formatPrice, getStockStatus, getStockLabel } from '../utils/helpers'
 
 export function ProductPublicPage({ productId, onBack }) {
@@ -8,17 +9,19 @@ export function ProductPublicPage({ productId, onBack }) {
   const [category, setCategory] = useState(null)
   const [loading,  setLoading]  = useState(true)
 
+  // Solo descarga ESTE producto (antes descargaba todo el catálogo)
   useEffect(() => {
-    const u1 = subscribeProducts(data => { setProduct(data.find(p => p.id === productId)||null); setLoading(false) })
-    const u2 = subscribeCategories(data => setCategory(prev => prev ? data.find(c => c.id === prev.id)||null : null))
-    return () => { u1(); u2() }
+    return subscribeProduct(productId, p => { setProduct(p); setLoading(false) })
   }, [productId])
 
   useEffect(() => {
-    if (!product) return
-    const u = subscribeCategories(data => setCategory(data.find(c => c.id === product.categoryId)||null))
-    return u
+    if (!product?.categoryId) { setCategory(null); return }
+    let alive = true
+    getCategory(product.categoryId).then(c => { if (alive) setCategory(c) }).catch(() => {})
+    return () => { alive = false }
   }, [product?.categoryId])
+
+  const image = useFullImage(product)
 
   if (loading) return <Loading text="Cargando producto..." />
   if (!product) return (
@@ -36,7 +39,7 @@ export function ProductPublicPage({ productId, onBack }) {
   return (
     <div className="pub-page">
       <div className="pub-inner">
-        {product.image && <div className="pub-img"><img src={product.image} alt={product.name} /></div>}
+        {image && <div className="pub-img"><img src={image} alt={product.name} /></div>}
         <div className="pub-body">
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
             {category ? <span style={{ fontSize:14, color:'var(--accent)' }}>{category.icon} {category.name}</span> : <span />}

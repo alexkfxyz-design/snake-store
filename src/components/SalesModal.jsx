@@ -4,6 +4,7 @@ import { Modal, Btn } from './UI'
 import { QRScanner } from './Scanner'
 import { registrarVenta } from '../utils/db'
 import { formatPrice, formatCurrency } from '../utils/helpers'
+import { getThumb } from '../utils/images'
 
 export function SalesModal({ products, categories, onClose }) {
   const [cart,      setCart]      = useState([])  // [{...product, qty}]
@@ -100,8 +101,8 @@ export function SalesModal({ products, categories, onClose }) {
                 const max = products.find(p => p.id === item.id)?.stock || 999
                 return (
                   <div key={item.id} className="cart-item">
-                    {item.image
-                      ? <img src={item.image} className="cart-item-img" alt={item.name} />
+                    {getThumb(item)
+                      ? <img src={getThumb(item)} className="cart-item-img" alt={item.name} />
                       : <div className="cart-item-img" style={{ display:'flex', alignItems:'center', justifyContent:'center', fontSize:24 }}>{cat?.icon || '📦'}</div>
                     }
                     <div className="cart-item-info">

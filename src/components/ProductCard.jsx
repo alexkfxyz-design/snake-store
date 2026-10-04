@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { getThumb, useFullImage } from '../utils/images'
 import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel } from '../utils/helpers'
 
-function ImageModal({ src, alt, onClose }) {
+function ImageModal({ product, onClose }) {
+  const src = useFullImage(product)
+  const alt = product.name
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.95)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:'1rem', cursor:'zoom-out' }}>
       <img src={src} alt={alt} style={{ maxWidth:'100%', maxHeight:'90vh', objectFit:'contain', borderRadius:8 }} />
@@ -13,18 +16,19 @@ function ImageModal({ src, alt, onClose }) {
 export function ProductCard({ product, category, onClick }) {
   const [showImg, setShowImg] = useState(false)
   const s = getStockStatus(product.stock)
+  const thumb = getThumb(product)
 
   return (
     <>
       <article className="card card-clickable" onClick={onClick}>
         <div style={{ background:'#1a1a1a', position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center', minHeight:180 }}
-          onClick={e => { if(product.image){ e.stopPropagation(); setShowImg(true) } }}>
-          {product.image
-            ? <img src={product.image} alt={product.name} style={{ width:'100%', objectFit:'contain', display:'block', cursor:'zoom-in' }} />
+          onClick={e => { if(thumb){ e.stopPropagation(); setShowImg(true) } }}>
+          {thumb
+            ? <img src={thumb} alt={product.name} loading="lazy" decoding="async" style={{ width:'100%', objectFit:'contain', display:'block', cursor:'zoom-in' }} />
             : <div style={{ height:180, width:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:48, opacity:.2 }}>{category?.icon||'📦'}</div>
           }
           {s !== 'ok' && <div style={{ position:'absolute', top:8, right:8, background:s==='out'?'var(--danger)':'var(--warning)', color:'#000', fontSize:10, fontWeight:700, borderRadius:20, padding:'3px 8px' }}>{s==='out'?'AGOTADO':'POCAS'}</div>}
-          {product.image && <div style={{ position:'absolute', bottom:6, right:8, fontSize:11, color:'rgba(255,255,255,.5)', background:'rgba(0,0,0,.4)', borderRadius:4, padding:'2px 6px' }}>🔍 Ver</div>}
+          {thumb && <div style={{ position:'absolute', bottom:6, right:8, fontSize:11, color:'rgba(255,255,255,.5)', background:'rgba(0,0,0,.4)', borderRadius:4, padding:'2px 6px' }}>🔍 Ver</div>}
         </div>
         <div className="card-body">
           {category && <span style={{ fontSize:11, color:'var(--accent)', marginBottom:6, display:'block' }}>{category.icon} {category.name}</span>}
@@ -37,7 +41,7 @@ export function ProductCard({ product, category, onClick }) {
         </div>
       </article>
 
-      {showImg && <ImageModal src={product.image} alt={product.name} onClose={() => setShowImg(false)} />}
+      {showImg && <ImageModal product={product} onClose={() => setShowImg(false)} />}
     </>
   )
 }

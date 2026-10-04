@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Loading } from '../components/UI'
 import { subscribeProducts, subscribeCategories } from '../utils/db'
+import { getThumb, useFullImage } from '../utils/images'
 import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel } from '../utils/helpers'
 
 const WA_NUMBER = '51910999500'
@@ -45,6 +46,7 @@ function WhatsAppOptions({ product, onClose }) {
 
 function ProductModal({ product, category, onClose }) {
   const [showWA, setShowWA] = useState(false)
+  const image = useFullImage(product)   // muestra la miniatura al instante y luego la imagen completa
   const ss = getStockStatus(product.stock)
   const sc = {
     ok:  { bg:'var(--success-bg)',  border:'var(--success-b)',  color:'var(--success)'  },
@@ -61,9 +63,9 @@ function ProductModal({ product, category, onClose }) {
     <>
       <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.92)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem', animation:'fadeIn .2s ease' }}>
         <div onClick={e => e.stopPropagation()} style={{ background:'var(--panel)', borderRadius:16, overflow:'hidden', width:'100%', maxWidth:480, maxHeight:'90vh', overflowY:'auto', animation:'slideUp .2s ease' }}>
-          {product.image && (
+          {image && (
             <div style={{ background:'#111', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <img src={product.image} alt={product.name} style={{ width:'100%', objectFit:'contain', maxHeight:360 }} />
+              <img src={image} alt={product.name} style={{ width:'100%', objectFit:'contain', maxHeight:360 }} />
             </div>
           )}
           <div style={{ padding:'1.5rem' }}>
@@ -106,11 +108,17 @@ export function CatalogPage({ onAdmin }) {
   const [activeCat,  setActiveCat]  = useState('all')
   const [search,     setSearch]     = useState('')
   const [selected,   setSelected]   = useState(null)
+  const [loadError,  setLoadError]  = useState(null)
+  const [slow,       setSlow]       = useState(false)
 
   useEffect(() => {
-    const u1 = subscribeProducts(data  => { setProducts(data); setLoading(false) })
+    const t  = setTimeout(() => setSlow(true), 8000)
+    const u1 = subscribeProducts(
+      data => { setProducts(data); setLoading(false); setLoadError(null) },
+      err  => { console.error('[Catálogo]', err); setLoadError(err.code || err.message); setLoading(false) }
+    )
     const u2 = subscribeCategories(data => setCategories(data))
-    return () => { u1(); u2() }
+    return () => { clearTimeout(t); u1(); u2() }
   }, [])
 
   const visible = products.filter(p => {
@@ -119,7 +127,15 @@ export function CatalogPage({ onAdmin }) {
     return matchCat && matchSearch
   })
 
-  if (loading) return <Loading text="Cargando catálogo..." />
+  if (loadError) return (
+    <div className="empty" style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', textAlign:'center' }}>
+      <div className="empty-icon">⚠</div>
+      <p className="empty-text">No se pudo cargar el catálogo.</p>
+      <p style={{ fontSize:12, color:'var(--muted)', margin:'8px 0 16px' }}>{loadError}</p>
+      <button onClick={() => window.location.reload()} style={{ background:'var(--accent)', color:'#000', border:'none', borderRadius:8, padding:'10px 20px', cursor:'pointer', fontWeight:600 }}>Reintentar</button>
+    </div>
+  )
+  if (loading) return <Loading text={slow ? 'Cargando catálogo... (está tardando, revisa tu conexión)' : 'Cargando catálogo...'} />
 
   return (
     <div style={{ minHeight:'100vh', background:'var(--black)' }}>
@@ -176,8 +192,8 @@ export function CatalogPage({ onAdmin }) {
                   style={{ breakInside:'avoid', marginBottom:'12px', background:'var(--panel)', borderRadius:12, overflow:'hidden', cursor:'pointer', border:'1px solid var(--border)', transition:'transform .15s, border-color .15s' }}
                   onMouseEnter={e => { e.currentTarget.style.transform='scale(1.02)'; e.currentTarget.style.borderColor='var(--accent)' }}
                   onMouseLeave={e => { e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.borderColor='var(--border)' }}>
-                  {p.image
-                    ? <img src={p.image} alt={p.name} style={{ width:'100%', display:'block', objectFit:'cover' }} />
+                  {getThumb(p)
+                    ? <img src={getThumb(p)} alt={p.name} loading="lazy" decoding="async" style={{ width:'100%', display:'block', objectFit:'cover', minHeight:120, background:'#1a1a1a' }} />
                     : <div style={{ height:160, display:'flex', alignItems:'center', justifyContent:'center', fontSize:48, opacity:.2, background:'#1a1a1a' }}>{cat?.icon||'📦'}</div>
                   }
                   <div style={{ padding:'10px 12px' }}>

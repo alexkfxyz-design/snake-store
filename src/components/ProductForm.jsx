@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { Modal, Btn, Field } from './UI'
 import { addProduct, updateProduct } from '../utils/db'
+import { buildImages, getThumb } from '../utils/images'
 
 export function ProductForm({ categories, onClose, editing }) {
   const [name,   setName]   = useState(editing?.name||'')
@@ -8,39 +9,39 @@ export function ProductForm({ categories, onClose, editing }) {
   const [price,  setPrice]  = useState(editing?.price||'')
   const [stock,  setStock]  = useState(editing?.stock??'')
   const [catId,  setCatId]  = useState(editing?.categoryId||categories[0]?.id||'')
-  const [image,  setImage]  = useState(editing?.image||null)
+  const [preview,   setPreview]   = useState(getThumb(editing))  // lo que se ve en el formulario
+  const [newImages, setNewImages] = useState(null)               // { full, thumb } solo si se sube una nueva
+  const [processing, setProcessing] = useState(false)
   const [saving, setSaving] = useState(false)
   const fileRef = useRef()
 
-  function handleImage(e) {
+  async function handleImage(e) {
     const file = e.target.files[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const img = new Image()
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        const MAX = 800
-        let w = img.width, h = img.height
-        if (w > MAX) { h = h * MAX / w; w = MAX }
-        if (h > MAX) { w = w * MAX / h; h = MAX }
-        canvas.width = w
-        canvas.height = h
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
-        setImage(canvas.toDataURL('image/jpeg', 0.7))
-      }
-      img.src = ev.target.result
+    setProcessing(true)
+    try {
+      const imgs = await buildImages(file)   // completa 800px + miniatura 320px
+      setNewImages(imgs)
+      setPreview(imgs.full)
+    } catch (err) {
+      console.error(err)
+      alert('No se pudo procesar la imagen. Prueba con otra.')
     }
-    reader.readAsDataURL(file)
+    setProcessing(false)
   }
 
   async function handleSubmit() {
     if (!name.trim() || !price) return
     setSaving(true)
-    const data = { name:name.trim(), description:desc.trim(), price:parseFloat(price), stock:parseInt(stock)||0, categoryId:catId, image }
-    editing ? await updateProduct(editing.id, data) : await addProduct(data)
+    const data = { name:name.trim(), description:desc.trim(), price:parseFloat(price), stock:parseInt(stock)||0, categoryId:catId }
+    try {
+      editing ? await updateProduct(editing.id, data, newImages) : await addProduct(data, newImages)
+      onClose()
+    } catch (err) {
+      console.error(err)
+      alert('No se pudo guardar el producto: ' + (err.code || err.message))
+    }
     setSaving(false)
-    onClose()
   }
 
   return (
@@ -48,7 +49,11 @@ export function ProductForm({ categories, onClose, editing }) {
       <h2 className="modal-title">{editing?'EDITAR PRODUCTO':'NUEVO PRODUCTO'}</h2>
       <Field label="Imagen del producto">
         <div className="img-upload" onClick={() => fileRef.current.click()}>
-          {image ? <img src={image} alt="preview" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <div className="img-placeholder"><span>📷</span><p>Clic para subir imagen</p></div>}
+          {processing
+            ? <div className="img-placeholder"><span>⏳</span><p>Procesando imagen...</p></div>
+            : preview
+              ? <img src={preview} alt="preview" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              : <div className="img-placeholder"><span>📷</span><p>Clic para subir imagen</p></div>}
         </div>
         <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display:'none' }} />
       </Field>
@@ -65,7 +70,7 @@ export function ProductForm({ categories, onClose, editing }) {
       </Field>
       <div className="form-actions">
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn onClick={handleSubmit} disabled={saving}>{saving?'Guardando...':editing?'Guardar cambios':'Crear producto'}</Btn>
+        <Btn onClick={handleSubmit} disabled={saving || processing}>{saving?'Guardando...':editing?'Guardar cambios':'Crear producto'}</Btn>
       </div>
     </Modal>
   )
