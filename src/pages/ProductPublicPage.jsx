@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Btn, Loading } from '../components/UI'
 import { subscribeProduct, getCategory } from '../utils/db'
 import { useFullImage } from '../utils/images'
+import { TallasChips } from '../components/TallasEditor'
 import { formatPrice, getStockStatus, getStockLabel } from '../utils/helpers'
 
 export function ProductPublicPage({ productId, onBack }) {
@@ -48,6 +49,12 @@ export function ProductPublicPage({ productId, onBack }) {
           <h1 className="pub-name">{product.name.toUpperCase()}</h1>
           <p className="pub-desc">{product.description||'Sin descripción disponible.'}</p>
           <div className="pub-price">S/ {formatPrice(product.price)}</div>
+          {product.tallas && (
+            <div style={{ marginBottom:16 }}>
+              <p style={{ fontSize:12, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:8 }}>Tallas disponibles</p>
+              <TallasChips product={product} />
+            </div>
+          )}
           <div className="stock-pill" style={{ background:sc.bg, border:`1px solid ${sc.border}`, color:sc.color }}>
             {ss==='out'?'⚠ Sin stock':ss==='low'?`⚡ Últimas ${product.stock} unidades`:`✓ ${product.stock} unidades disponibles`}
           </div>

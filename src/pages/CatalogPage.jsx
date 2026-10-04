@@ -2,21 +2,22 @@ import { useState, useEffect } from 'react'
 import { Loading } from '../components/UI'
 import { subscribeProducts, subscribeCategories } from '../utils/db'
 import { getThumb, useFullImage } from '../utils/images'
-import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel } from '../utils/helpers'
+import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel, getTallas, getTallasDisponibles } from '../utils/helpers'
 
 const WA_NUMBER = '51910999500'
 
-function sendWhatsApp(product, tipo) {
+function sendWhatsApp(product, tipo, talla = null) {
+  const tallaTxt = talla ? `Talla: ${talla}\n` : ''
   const mensajes = {
-    1: `Hola! 👋 Quiero hacer una *consulta* sobre el producto:\n\n*${product.name}*\nPrecio: S/ ${formatPrice(product.price)}\n${product.description ? `Descripción: ${product.description}\n` : ''}`,
-    2: `Hola! 👋 Quiero hacer una *reserva* del producto:\n\n*${product.name}*\nPrecio: S/ ${formatPrice(product.price)}\n${product.description ? `Descripción: ${product.description}\n` : ''}`,
-    3: `Hola! 👋 Quiero consultar sobre el *envío* del producto:\n\n*${product.name}*\nPrecio: S/ ${formatPrice(product.price)}\n${product.description ? `Descripción: ${product.description}\n` : ''}`,
+    1: `Hola! 👋 Quiero hacer una *consulta* sobre el producto:\n\n*${product.name}*\nPrecio: S/ ${formatPrice(product.price)}\n${tallaTxt}${product.description ? `Descripción: ${product.description}\n` : ''}`,
+    2: `Hola! 👋 Quiero hacer una *reserva* del producto:\n\n*${product.name}*\nPrecio: S/ ${formatPrice(product.price)}\n${tallaTxt}${product.description ? `Descripción: ${product.description}\n` : ''}`,
+    3: `Hola! 👋 Quiero consultar sobre el *envío* del producto:\n\n*${product.name}*\nPrecio: S/ ${formatPrice(product.price)}\n${tallaTxt}${product.description ? `Descripción: ${product.description}\n` : ''}`,
   }
   const msg = encodeURIComponent(mensajes[tipo])
   window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank')
 }
 
-function WhatsAppOptions({ product, onClose }) {
+function WhatsAppOptions({ product, talla, onClose }) {
   const opciones = [
     { id:1, label:'💬 Consulta sobre el producto',  color:'#25D366' },
     { id:2, label:'🛒 Reserva del producto',         color:'#128C7E' },
@@ -26,9 +27,9 @@ function WhatsAppOptions({ product, onClose }) {
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.85)', zIndex:10000, display:'flex', alignItems:'flex-end', justifyContent:'center', padding:'1rem', animation:'fadeIn .15s ease' }}>
       <div onClick={e => e.stopPropagation()} style={{ background:'var(--panel)', borderRadius:16, width:'100%', maxWidth:480, padding:'1.5rem', animation:'slideUp .2s ease' }}>
         <p style={{ fontSize:12, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:12 }}>Contactar por WhatsApp</p>
-        <p style={{ fontSize:15, fontWeight:500, marginBottom:16 }}>{product.name}</p>
+        <p style={{ fontSize:15, fontWeight:500, marginBottom:16 }}>{product.name}{talla ? ` · Talla ${talla}` : ''}</p>
         {opciones.map(op => (
-          <button key={op.id} onClick={() => { sendWhatsApp(product, op.id); onClose() }}
+          <button key={op.id} onClick={() => { sendWhatsApp(product, op.id, talla); onClose() }}
             style={{ width:'100%', background:op.color, color:'#fff', border:'none', borderRadius:10, padding:'14px 16px', fontSize:14, fontWeight:600, cursor:'pointer', marginBottom:10, textAlign:'left', display:'flex', alignItems:'center', gap:10, transition:'opacity .15s' }}
             onMouseEnter={e => e.currentTarget.style.opacity='.85'}
             onMouseLeave={e => e.currentTarget.style.opacity='1'}
@@ -46,6 +47,9 @@ function WhatsAppOptions({ product, onClose }) {
 
 function ProductModal({ product, category, onClose }) {
   const [showWA, setShowWA] = useState(false)
+  const [talla,  setTalla]  = useState(null)
+  const tallas = getTallas(product)
+  const disponibles = tallas.filter(t => t.qty > 0)
   const image = useFullImage(product)   // muestra la miniatura al instante y luego la imagen completa
   const ss = getStockStatus(product.stock)
   const sc = {
@@ -80,7 +84,32 @@ function ProductModal({ product, category, onClose }) {
             </div>
             <div style={{ padding:'12px 16px', borderRadius:'var(--r)', border:`1px solid ${sc.border}`, background:sc.bg, color:sc.color, fontSize:14, fontWeight:500, marginBottom:16 }}>
               {ss==='out' ? '⚠ Sin stock disponible' : ss==='low' ? `⚡ Últimas ${product.stock} unidades` : `✓ ${product.stock} unidades disponibles`}
+              {tallas.length > 0 && ss !== 'out' && ` · ${disponibles.length} talla${disponibles.length !== 1 ? 's' : ''}`}
             </div>
+
+            {/* Tallas */}
+            {tallas.length > 0 && (
+              <div style={{ marginBottom:16 }}>
+                <p style={{ fontSize:12, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:8 }}>
+                  Tallas disponibles {talla && <span style={{ color:'var(--accent)', textTransform:'none', letterSpacing:0 }}>· elegiste {talla}</span>}
+                </p>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {tallas.map(t => {
+                    const ok = t.qty > 0, sel = talla === t.talla
+                    return (
+                      <button key={t.talla} disabled={!ok} onClick={() => setTalla(sel ? null : t.talla)}
+                        style={{ minWidth:58, padding:'8px 10px', borderRadius:10, cursor: ok ? 'pointer' : 'not-allowed',
+                                 border: sel ? '2px solid var(--accent)' : '1px solid var(--border)',
+                                 background: sel ? 'var(--accent)' : 'var(--black)', color: sel ? '#000' : ok ? 'var(--white)' : 'var(--muted)',
+                                 opacity: ok ? 1 : .35, textDecoration: ok ? 'none' : 'line-through' }}>
+                        <div style={{ fontWeight:700, fontSize:15 }}>{t.talla}</div>
+                        <div style={{ fontSize:10, color: sel ? '#000' : 'var(--muted)' }}>{ok ? `${t.qty} ud${t.qty !== 1 ? 's' : ''}.` : 'agotada'}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Botón WhatsApp */}
             <button onClick={() => setShowWA(true)}
@@ -96,7 +125,7 @@ function ProductModal({ product, category, onClose }) {
         </div>
       </div>
 
-      {showWA && <WhatsAppOptions product={product} onClose={() => setShowWA(false)} />}
+      {showWA && <WhatsAppOptions product={product} talla={talla} onClose={() => setShowWA(false)} />}
     </>
   )
 }
@@ -199,6 +228,11 @@ export function CatalogPage({ onAdmin }) {
                   <div style={{ padding:'10px 12px' }}>
                     {cat && <span style={{ fontSize:10, color:'var(--accent)', display:'block', marginBottom:4 }}>{cat.icon} {cat.name}</span>}
                     <p style={{ fontSize:13, fontWeight:500, marginBottom:6, lineHeight:1.3 }}>{p.name}</p>
+                    {getTallasDisponibles(p).length > 0 && (
+                      <p style={{ fontSize:11, color:'var(--muted)', marginBottom:6 }}>
+                        Tallas: {getTallasDisponibles(p).map(t => t.talla).join(' · ')}
+                      </p>
+                    )}
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                       <span style={{ fontFamily:'var(--fd)', fontSize:18, color:'var(--accent)', letterSpacing:'.05em' }}>S/ {formatPrice(p.price)}</span>
                       {ss !== 'ok' && <span style={{ fontSize:10, background: ss==='out'?'var(--danger)':'var(--warning)', color:'#000', borderRadius:10, padding:'2px 7px', fontWeight:700 }}>{ss==='out'?'AGOTADO':'POCAS'}</span>}

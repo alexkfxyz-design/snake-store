@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getThumb, useFullImage } from '../utils/images'
+import { TallasChips } from './TallasEditor'
 import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel } from '../utils/helpers'
 
 function ImageModal({ product, onClose }) {
@@ -34,6 +35,7 @@ export function ProductCard({ product, category, onClick }) {
           {category && <span style={{ fontSize:11, color:'var(--accent)', marginBottom:6, display:'block' }}>{category.icon} {category.name}</span>}
           <h3 style={{ fontSize:15, fontWeight:500, marginBottom:4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{product.name}</h3>
           <p style={{ fontSize:12, color:'var(--muted)', marginBottom:12, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', lineHeight:1.5, minHeight:36 }}>{product.description||'—'}</p>
+          {product.tallas && <div style={{ marginBottom:10 }}><TallasChips product={product} compact /></div>}
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <span style={{ fontFamily:'var(--fd)', fontSize:22, letterSpacing:'.05em', color:'var(--accent)' }}>S/ {formatPrice(product.price)}</span>
             <span className={getStockBadgeClass(product.stock)} style={{ fontSize:11 }}>{getStockLabel(product.stock)}</span>

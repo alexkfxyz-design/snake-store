@@ -14,7 +14,7 @@ function exportToExcel(ventas, period) {
   const ventasData = ventas.map(v => ({
     'Fecha':        new Date(v.fecha).toLocaleDateString('es-PE'),
     'Hora':         new Date(v.fecha).toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' }),
-    'Productos':    v.items.map(i => `${i.productName} x${i.qty}`).join(', '),
+    'Productos':    v.items.map(i => `${i.productName}${i.talla ? ` (T ${i.talla})` : ''} x${i.qty}`).join(', '),
     'Unidades':     v.items.reduce((s, i) => s + i.qty, 0),
     'Total (S/)':   parseFloat((v.total || 0).toFixed(2)),
   }))
@@ -30,6 +30,7 @@ function exportToExcel(ventas, period) {
         'Fecha':         new Date(v.fecha).toLocaleDateString('es-PE'),
         'Hora':          new Date(v.fecha).toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' }),
         'Producto':      i.productName,
+        'Talla':         i.talla || '',
         'Cantidad':      i.qty,
         'Precio unit.':  parseFloat(i.price.toFixed(2)),
         'Subtotal (S/)': parseFloat(i.subtotal.toFixed(2)),
@@ -250,14 +251,14 @@ export function ReportsPage({ ventas }) {
               <div key={v.id} className="venta-row" onClick={() => setShowDetail(showDetail === v.id ? null : v.id)} style={{ cursor:'pointer' }}>
                 <div>
                   <div style={{ fontSize:14, fontWeight:500, marginBottom:2 }}>
-                    {v.items.map(i => `${i.productName} x${i.qty}`).join(' · ')}
+                    {v.items.map(i => `${i.productName}${i.talla ? ` (T ${i.talla})` : ''} x${i.qty}`).join(' · ')}
                   </div>
                   <div style={{ fontSize:12, color:'var(--muted)' }}>{formatDateTime(v.fecha)} · {v.items.reduce((s,i) => s+i.qty, 0)} unidades</div>
                   {showDetail === v.id && (
                     <div style={{ marginTop:10, paddingTop:10, borderTop:'1px solid var(--border)' }}>
                       {v.items.map((item, idx) => (
                         <div key={idx} style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:4 }}>
-                          <span style={{ color:'var(--muted)' }}>{item.productName} x{item.qty}</span>
+                          <span style={{ color:'var(--muted)' }}>{item.productName}{item.talla ? ` (T ${item.talla})` : ''} x{item.qty}</span>
                           <span>{formatCurrency(item.subtotal)}</span>
                         </div>
                       ))}

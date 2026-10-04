@@ -87,6 +87,7 @@ export async function registrarVenta(items) {
     items: items.map(i => ({
       productId:   i.id,
       productName: i.name,
+      talla:       i.talla || null,
       price:       i.price,
       qty:         i.qty,
       subtotal:    i.price * i.qty,
@@ -100,9 +101,17 @@ export async function registrarVenta(items) {
   })
 
   // Descontar stock de cada producto
+  // (si el producto tiene tallas, también se descuenta la talla vendida)
   items.forEach(item => {
     const ref = doc(db, 'products', item.id)
-    batch.update(ref, { stock: increment(-item.qty) })
+    if (item.talla) {
+      batch.update(ref, {
+        stock: increment(-item.qty),
+        [`tallas.${item.talla}`]: increment(-item.qty),
+      })
+    } else {
+      batch.update(ref, { stock: increment(-item.qty) })
+    }
   })
 
   await batch.commit()

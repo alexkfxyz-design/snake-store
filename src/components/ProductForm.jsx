@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react'
 import { Modal, Btn, Field } from './UI'
 import { addProduct, updateProduct } from '../utils/db'
+import { deleteField } from 'firebase/firestore'
 import { buildImages, getThumb } from '../utils/images'
+import { getTallas } from '../utils/helpers'
+import { TallasEditor } from './TallasEditor'
 
 export function ProductForm({ categories, onClose, editing }) {
   const [name,   setName]   = useState(editing?.name||'')
@@ -13,6 +16,9 @@ export function ProductForm({ categories, onClose, editing }) {
   const [newImages, setNewImages] = useState(null)               // { full, thumb } solo si se sube una nueva
   const [processing, setProcessing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const initialTallas = getTallas(editing).map(t => ({ talla:t.talla, qty:String(t.qty) }))
+  const [useTallas, setUseTallas] = useState(initialTallas.length > 0)
+  const [tallaRows, setTallaRows] = useState(initialTallas)
   const fileRef = useRef()
 
   async function handleImage(e) {
@@ -32,8 +38,23 @@ export function ProductForm({ categories, onClose, editing }) {
 
   async function handleSubmit() {
     if (!name.trim() || !price) return
+    const stockNum = parseInt(stock) || 0
+    let tallas = null
+    if (useTallas) {
+      if (tallaRows.length === 0) { alert('Agrega al menos una talla o desactiva "Dividir por tallas".'); return }
+      tallas = Object.fromEntries(tallaRows.map(r => [r.talla, Math.max(0, parseInt(r.qty) || 0)]))
+      const suma = Object.values(tallas).reduce((a, b) => a + b, 0)
+      if (suma !== stockNum) {
+        if (!window.confirm(`Las tallas suman ${suma} unidades pero el stock dice ${stockNum}. ¿Guardar con stock = ${suma}?`)) return
+      }
+    }
     setSaving(true)
-    const data = { name:name.trim(), description:desc.trim(), price:parseFloat(price), stock:parseInt(stock)||0, categoryId:catId }
+    const data = {
+      name:name.trim(), description:desc.trim(), price:parseFloat(price), categoryId:catId,
+      stock: tallas ? Object.values(tallas).reduce((a, b) => a + b, 0) : stockNum,
+      tallas: tallas || (editing ? deleteField() : null),
+    }
+    if (!editing && !tallas) delete data.tallas
     try {
       editing ? await updateProduct(editing.id, data, newImages) : await addProduct(data, newImages)
       onClose()
@@ -63,6 +84,13 @@ export function ProductForm({ categories, onClose, editing }) {
         <Field label="Precio (S/)"><input className="input" type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="0.00" /></Field>
         <Field label="Stock (unidades)"><input className="input" type="number" min="0" value={stock} onChange={e => setStock(e.target.value)} placeholder="0" /></Field>
       </div>
+      <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, cursor:'pointer', marginBottom:12, color: useTallas ? 'var(--accent)' : 'var(--muted)' }}>
+        <input type="checkbox" checked={useTallas} onChange={e => setUseTallas(e.target.checked)} />
+        Dividir el stock por tallas
+      </label>
+      {useTallas && (
+        <TallasEditor rows={tallaRows} onChange={setTallaRows} stockTotal={stock} onUseSum={n => setStock(String(n))} />
+      )}
       <Field label="Categoría">
         <select className="input" value={catId} onChange={e => setCatId(e.target.value)}>
           {categories.length===0 ? <option value="">Sin categorías</option> : categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}

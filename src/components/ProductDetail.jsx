@@ -1,5 +1,6 @@
 import { Modal, Btn } from './UI'
 import { QRCode } from './QRCode'
+import { TallasChips } from './TallasEditor'
 import { deleteProduct } from '../utils/db'
 import { useFullImage } from '../utils/images'
 import { formatPrice, getProductUrl, getStockBadgeClass, getStockLabel } from '../utils/helpers'
@@ -20,7 +21,13 @@ export function ProductDetail({ product, category, onClose, onEdit }) {
       </div>
       <h2 style={{ fontFamily:'var(--fd)', fontSize:30, letterSpacing:'.08em', marginBottom:8 }}>{product.name.toUpperCase()}</h2>
       <p style={{ color:'var(--muted)', fontSize:14, lineHeight:1.65, marginBottom:16 }}>{product.description||'Sin descripción.'}</p>
-      <div style={{ fontFamily:'var(--fd)', fontSize:38, letterSpacing:'.05em', color:'var(--accent)', marginBottom:24 }}>S/ {formatPrice(product.price)}</div>
+      <div style={{ fontFamily:'var(--fd)', fontSize:38, letterSpacing:'.05em', color:'var(--accent)', marginBottom:16 }}>S/ {formatPrice(product.price)}</div>
+      {product.tallas && (
+        <div style={{ marginBottom:24 }}>
+          <p className="label" style={{ marginBottom:8 }}>Stock por talla</p>
+          <TallasChips product={product} />
+        </div>
+      )}
       <div style={{ borderTop:'1px solid var(--border)', paddingTop:20, marginBottom:20 }}>
         <p className="label" style={{ marginBottom:12 }}>Código QR del producto</p>
         <div className="qr-wrap"><QRCode value={getProductUrl(product.id)} size={140} /></div>
