@@ -1,3 +1,4 @@
+// src/components/SalesModal.jsx
 import { useState } from 'react'
 import { Modal, Btn } from './UI'
 import { QRScanner } from './Scanner'
@@ -5,38 +6,33 @@ import { registrarVenta } from '../utils/db'
 import { formatPrice, formatCurrency } from '../utils/helpers'
 
 export function SalesModal({ products, categories, onClose }) {
-  const [cart,     setCart]     = useState([])
-  const [scanning, setScanning] = useState(false)
-  const [saving,   setSaving]   = useState(false)
-  const [success,  setSuccess]  = useState(false)
-  const [tallaPick, setTallaPick] = useState(null) // { product } esperando elegir talla
+  const [cart,      setCart]      = useState([])  // [{...product, qty}]
+  const [scanning,  setScanning]  = useState(false)
+  const [saving,    setSaving]    = useState(false)
+  const [success,   setSuccess]   = useState(false)
 
   function addToCart(product) {
-    // Si tiene tallas, pedir que elija talla
-    if (product.tallas) {
-      setTallaPick(product)
-      setScanning(false)
-    } else {
-      addItemToCart(product, null)
-    }
-  }
-
-  function addItemToCart(product, talla) {
-    const key = talla ? `${product.id}_${talla}` : product.id
     setCart(prev => {
-      const exists = prev.find(i => i.key === key)
-      if (exists) return prev.map(i => i.key === key ? { ...i, qty: i.qty + 1 } : i)
-      return [...prev, { ...product, key, talla, qty: 1 }]
+      const exists = prev.find(i => i.id === product.id)
+      if (exists) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i)
+      return [...prev, { ...product, qty: 1 }]
     })
-    setTallaPick(null)
+    // No cerrar el escáner — sigue escaneando
   }
 
-  function changeQty(key, delta) {
-    setCart(prev => prev.map(i => i.key === key ? { ...i, qty: Math.max(1, i.qty + delta) } : i).filter(i => i.qty > 0))
+  function changeQty(id, delta) {
+    setCart(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i).filter(i => i.qty > 0))
   }
 
-  function removeItem(key) {
-    setCart(prev => prev.filter(i => i.key !== key))
+  function setQty(id, val) {
+    const n = parseInt(val) || 1
+    const product = products.find(p => p.id === id)
+    const max = product?.stock || 999
+    setCart(prev => prev.map(i => i.id === id ? { ...i, qty: Math.min(Math.max(1, n), max) } : i))
+  }
+
+  function removeItem(id) {
+    setCart(prev => prev.filter(i => i.id !== id))
   }
 
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
@@ -69,12 +65,14 @@ export function SalesModal({ products, categories, onClose }) {
       <Modal onClose={onClose} large>
         <h2 className="modal-title">🛒 REGISTRAR VENTA</h2>
 
+        {/* Botón escanear */}
         <div style={{ marginBottom:20 }}>
           <Btn onClick={() => setScanning(true)} variant="blue" style={{ width:'100%' }}>
             📷 Escanear producto con QR
           </Btn>
         </div>
 
+        {/* También buscar manualmente */}
         <div className="field">
           <label className="label">O buscar producto manualmente</label>
           <select className="input" onChange={e => {
@@ -90,24 +88,6 @@ export function SalesModal({ products, categories, onClose }) {
           </select>
         </div>
 
-        {/* Selector de talla */}
-        {tallaPick && (
-          <div style={{ background:'var(--black)', border:'1px solid var(--accent-b)', borderRadius:'var(--rl)', padding:'1rem', marginBottom:16 }}>
-            <p style={{ fontSize:13, color:'var(--accent)', marginBottom:12, fontWeight:600 }}>Selecciona la talla — {tallaPick.name}</p>
-            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {Object.entries(tallaPick.tallas).filter(([,v]) => v > 0).map(([talla, stock]) => (
-                <button key={talla} onClick={() => addItemToCart(tallaPick, talla)}
-                  style={{ background:'var(--panel)', border:'1px solid var(--border)', color:'var(--white)', borderRadius:8, padding:'10px 16px', cursor:'pointer', fontSize:14, fontWeight:600, transition:'all .15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent)'; e.currentTarget.style.color='var(--accent)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--white)' }}>
-                  {talla} <span style={{ fontSize:11, color:'var(--muted)', fontWeight:400 }}>({stock} uds.)</span>
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setTallaPick(null)} style={{ marginTop:10, color:'var(--muted)', fontSize:12, background:'none', border:'none', cursor:'pointer' }}>Cancelar</button>
-          </div>
-        )}
-
         {/* Carrito */}
         {cart.length === 0
           ? <div style={{ textAlign:'center', padding:'2rem', color:'var(--muted)', border:'2px dashed var(--border)', borderRadius:'var(--rl)', marginBottom:16 }}>
@@ -117,25 +97,31 @@ export function SalesModal({ products, categories, onClose }) {
           : <>
               {cart.map(item => {
                 const cat = categories.find(c => c.id === item.categoryId)
+                const max = products.find(p => p.id === item.id)?.stock || 999
                 return (
-                  <div key={item.key} className="cart-item">
+                  <div key={item.id} className="cart-item">
                     {item.image
                       ? <img src={item.image} className="cart-item-img" alt={item.name} />
-                      : <div className="cart-item-img" style={{ display:'flex', alignItems:'center', justifyContent:'center', fontSize:24 }}>{cat?.icon||'📦'}</div>
+                      : <div className="cart-item-img" style={{ display:'flex', alignItems:'center', justifyContent:'center', fontSize:24 }}>{cat?.icon || '📦'}</div>
                     }
                     <div className="cart-item-info">
-                      <div className="cart-item-name">{item.name} {item.talla && <span style={{ background:'var(--accent-dim)', color:'var(--accent)', borderRadius:4, padding:'2px 6px', fontSize:11, marginLeft:4 }}>{item.talla}</span>}</div>
+                      <div className="cart-item-name">{item.name}</div>
                       <div className="cart-item-price">S/ {formatPrice(item.price)} c/u · Subtotal: {formatCurrency(item.price * item.qty)}</div>
                     </div>
                     <div className="cart-item-qty">
-                      <button className="qty-btn" onClick={() => changeQty(item.key, -1)}>−</button>
-                      <span style={{ width:30, textAlign:'center', fontSize:14 }}>{item.qty}</span>
-                      <button className="qty-btn" onClick={() => changeQty(item.key, 1)}>+</button>
-                      <button onClick={() => removeItem(item.key)} style={{ color:'var(--danger)', fontSize:18, marginLeft:4 }}>🗑</button>
+                      <button className="qty-btn" onClick={() => changeQty(item.id, -1)}>−</button>
+                      <input
+                        type="number" min={1} max={max} value={item.qty}
+                        onChange={e => setQty(item.id, e.target.value)}
+                        style={{ width:50, textAlign:'center', background:'var(--black)', border:'1px solid var(--border)', color:'var(--white)', borderRadius:6, padding:'4px 6px', fontSize:14 }}
+                      />
+                      <button className="qty-btn" onClick={() => changeQty(item.id, 1)}>+</button>
+                      <button onClick={() => removeItem(item.id)} style={{ color:'var(--danger)', fontSize:18, marginLeft:4 }}>🗑</button>
                     </div>
                   </div>
                 )
               })}
+
               <div className="cart-total">
                 <span style={{ fontFamily:'var(--fd)', fontSize:20, letterSpacing:'.08em', color:'var(--muted)' }}>TOTAL</span>
                 <span style={{ fontFamily:'var(--fd)', fontSize:32, letterSpacing:'.05em', color:'var(--accent)' }}>{formatCurrency(total)}</span>
@@ -146,13 +132,18 @@ export function SalesModal({ products, categories, onClose }) {
         <div className="form-actions" style={{ marginTop:20 }}>
           <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
           <Btn variant="success" onClick={confirmarVenta} disabled={cart.length === 0 || saving}>
-            {saving ? 'Registrando...' : '✓ Confirmar venta'}
+            {saving ? 'Registrando...' : `✓ Confirmar venta`}
           </Btn>
         </div>
       </Modal>
 
+      {/* Escáner superpuesto */}
       {scanning && (
-        <QRScanner products={products} onScan={addToCart} onClose={() => setScanning(false)} />
+        <QRScanner
+          products={products}
+          onScan={addToCart}
+          onClose={() => setScanning(false)}
+        />
       )}
     </>
   )
