@@ -13,6 +13,25 @@ export function SalesModal({ products, categories, onClose }) {
   const [success,   setSuccess]   = useState(false)
 
   const [pickTalla, setPickTalla] = useState(null)  // producto esperando que se elija talla
+  const [search,    setSearch]    = useState('')
+
+  // Búsqueda por nombre (ignora mayúsculas y tildes; todas las palabras deben coincidir)
+  const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const words = norm(search).split(/\s+/).filter(Boolean)
+  const results = words.length === 0 ? [] : products
+    .filter(p => {
+      const cat = categories.find(c => c.id === p.categoryId)
+      const hay = norm(`${p.name} ${p.description || ''} ${cat?.name || ''}`)
+      return words.every(w => hay.includes(w))
+    })
+    .sort((a, b) => (b.stock > 0) - (a.stock > 0))
+    .slice(0, 8)
+
+  function pickFromSearch(p) {
+    if (!p || p.stock <= 0) return
+    addToCart(p)
+    setSearch('')
+  }
 
   // Cada línea del carrito se identifica por producto + talla
   const keyOf = (id, talla) => `${id}|${talla || ''}`
@@ -86,9 +105,46 @@ export function SalesModal({ products, categories, onClose }) {
           </Btn>
         </div>
 
-        {/* También buscar manualmente */}
+        {/* Buscar por nombre */}
+        <div className="field" style={{ position:'relative' }}>
+          <label className="label">Buscar producto por nombre</label>
+          <input className="input" value={search} onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); pickFromSearch(results.find(r => r.stock > 0)) } if (e.key === 'Escape') setSearch('') }}
+            placeholder="Escribe el nombre... (ej: nike blanco)" autoComplete="off" />
+          {search && (
+            <div style={{ marginTop:6, border:'1px solid var(--border)', borderRadius:'var(--r)', overflow:'hidden', maxHeight:300, overflowY:'auto' }}>
+              {results.length === 0
+                ? <p style={{ padding:'12px', fontSize:13, color:'var(--muted)', textAlign:'center' }}>No se encontraron productos.</p>
+                : results.map(p => {
+                    const cat = categories.find(c => c.id === p.categoryId)
+                    const ok = p.stock > 0
+                    const tallasDisp = getTallas(p).filter(t => t.qty > 0).map(t => t.talla)
+                    return (
+                      <button key={p.id} type="button" onClick={() => pickFromSearch(p)} disabled={!ok}
+                        style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'8px 10px', background:'var(--black)', border:'none', borderBottom:'1px solid var(--border)',
+                                 cursor: ok ? 'pointer' : 'not-allowed', opacity: ok ? 1 : .45, textAlign:'left', color:'var(--white)' }}
+                        onMouseEnter={e => { if (ok) e.currentTarget.style.background = 'var(--panel)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--black)' }}>
+                        {getThumb(p)
+                          ? <img src={getThumb(p)} alt="" style={{ width:40, height:40, objectFit:'cover', borderRadius:6, flexShrink:0 }} />
+                          : <div style={{ width:40, height:40, borderRadius:6, background:'var(--panel)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{cat?.icon || '📦'}</div>}
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:14, fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</div>
+                          <div style={{ fontSize:11, color:'var(--muted)' }}>
+                            {ok ? `${p.stock} uds.` : 'Sin stock'}{tallasDisp.length > 0 && ` · Tallas: ${tallasDisp.join(', ')}`}
+                          </div>
+                        </div>
+                        <span style={{ fontFamily:'var(--fd)', fontSize:18, color:'var(--accent)', flexShrink:0 }}>S/ {formatPrice(p.price)}</span>
+                      </button>
+                    )
+                  })}
+            </div>
+          )}
+        </div>
+
+        {/* También seleccionar de la lista */}
         <div className="field">
-          <label className="label">O buscar producto manualmente</label>
+          <label className="label">O seleccionar de la lista</label>
           <select className="input" onChange={e => {
             if (!e.target.value) return
             const p = products.find(x => x.id === e.target.value)
