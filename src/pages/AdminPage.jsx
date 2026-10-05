@@ -8,7 +8,7 @@ import { CategoryForm }  from '../components/CategoryForm'
 import { SalesModal }    from '../components/SalesModal'
 import { ReportsPage }   from './ReportsPage'
 import { subscribeProducts, subscribeCategories, subscribeVentas, deleteCategory, deleteOutOfStock } from '../utils/db'
-import { needsImageMigration, migrateAllInBatches } from '../utils/images'
+import { needsImageMigration, migrateAllInBatches, needsCardUpgrade, upgradeCardsInBatches } from '../utils/images'
 // auth handled by Firebase '../utils/helpers'
 
 const VIEWS = ['products', 'categories', 'ventas', 'reportes']
@@ -65,6 +65,20 @@ export function AdminPage({ onLogout, onCatalog }) {
 
   const pendingImages = products.filter(needsImageMigration).length
   const [deletingOut, setDeletingOut] = useState(false)
+  const [upgrade,     setUpgrade]     = useState(null)   // { scanned, done, failed, running }
+  const pendingCards = products.filter(needsCardUpgrade).length
+
+  async function runUpgrade() {
+    if (!window.confirm(`Se mejorará la calidad de las imágenes de ${pendingCards} producto(s). Puede tardar unos minutos; no cierres la página. ¿Continuar?`)) return
+    setUpgrade({ scanned:0, done:0, failed:0, running:true })
+    try {
+      const res = await upgradeCardsInBatches(prog => setUpgrade({ ...prog, running:true }))
+      setUpgrade({ ...res, running:false })
+    } catch (err) {
+      console.error(err)
+      setUpgrade(u => ({ ...u, running:false, error: err.code || err.message }))
+    }
+  }
 
   async function eliminarAgotados() {
     const n = stats.outStock
@@ -144,6 +158,24 @@ export function AdminPage({ onLogout, onCatalog }) {
             {migration && !migration.running && pendingImages === 0
               ? <Btn variant="ghost" size="sm" onClick={() => setMigration(null)}>Cerrar</Btn>
               : <Btn size="sm" onClick={runMigration}>Optimizar ahora</Btn>}
+          </div>
+        )}
+
+        {/* Mejorar calidad de imágenes */}
+        {(pendingCards > 0 || upgrade) && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', padding:'12px 16px', marginBottom:'1.25rem', borderRadius:'var(--r)', border:'1px solid var(--border)', background:'var(--panel)', color:'var(--accent)', fontSize:14 }}>
+            <span>
+              {upgrade?.running
+                ? `⏳ Mejorando imágenes... revisados ${upgrade.scanned}, mejorados ${upgrade.done}${upgrade.failed ? `, fallaron ${upgrade.failed}` : ''}. No cierres la página.`
+                : upgrade?.error
+                  ? `⚠ Error: ${upgrade.error}. Puedes reintentar.`
+                  : pendingCards === 0
+                    ? `✓ Imágenes en alta calidad (${upgrade.done} mejoradas).`
+                    : `✨ ${pendingCards} producto(s) tienen imágenes de baja calidad en el catálogo.`}
+            </span>
+            {upgrade && !upgrade.running && pendingCards === 0
+              ? <Btn variant="ghost" size="sm" onClick={() => setUpgrade(null)}>Cerrar</Btn>
+              : <Btn size="sm" onClick={runUpgrade} disabled={upgrade?.running}>{upgrade?.running ? 'Mejorando...' : 'Mejorar calidad'}</Btn>}
           </div>
         )}
 

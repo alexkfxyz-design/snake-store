@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { Modal, Btn, Field } from './UI'
 import { addProduct, updateProduct, deleteProduct } from '../utils/db'
 import { deleteField } from 'firebase/firestore'
-import { buildImages, getThumb } from '../utils/images'
+import { buildImages, useFullImage } from '../utils/images'
 import { getTallas } from '../utils/helpers'
 import { TallasEditor } from './TallasEditor'
 
@@ -12,7 +12,8 @@ export function ProductForm({ categories, onClose, editing }) {
   const [price,  setPrice]  = useState(editing?.price||'')
   const [stock,  setStock]  = useState(editing?.stock??'')
   const [catId,  setCatId]  = useState(editing?.categoryId||categories[0]?.id||'')
-  const [preview,   setPreview]   = useState(getThumb(editing))  // lo que se ve en el formulario
+  const currentImage = useFullImage(editing)                      // imagen actual (completa) del producto
+  const [preview,   setPreview]   = useState(null)                // nueva imagen elegida en el formulario
   const [newImages, setNewImages] = useState(null)               // { full, thumb } solo si se sube una nueva
   const [processing, setProcessing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -82,8 +83,8 @@ export function ProductForm({ categories, onClose, editing }) {
         <div className="img-upload" onClick={() => fileRef.current.click()}>
           {processing
             ? <div className="img-placeholder"><span>⏳</span><p>Procesando imagen...</p></div>
-            : preview
-              ? <img src={preview} alt="preview" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            : (preview || currentImage)
+              ? <img src={preview || currentImage} alt="preview" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
               : <div className="img-placeholder"><span>📷</span><p>Clic para subir imagen</p></div>}
         </div>
         <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display:'none' }} />

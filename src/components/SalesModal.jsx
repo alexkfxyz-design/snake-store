@@ -5,6 +5,7 @@ import { QRScanner } from './Scanner'
 import { registrarVenta } from '../utils/db'
 import { formatPrice, formatCurrency, hasTallas, getTallas } from '../utils/helpers'
 import { getThumb } from '../utils/images'
+import { CardImage } from './CardImage'
 
 export function SalesModal({ products, categories, onClose }) {
   const [cart,      setCart]      = useState([])  // [{...product, qty}]
@@ -126,7 +127,7 @@ export function SalesModal({ products, categories, onClose }) {
                         onMouseEnter={e => { if (ok) e.currentTarget.style.background = 'var(--panel)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'var(--black)' }}>
                         {getThumb(p)
-                          ? <img src={getThumb(p)} alt="" style={{ width:40, height:40, objectFit:'cover', borderRadius:6, flexShrink:0 }} />
+                          ? <div style={{ width:40, height:40, borderRadius:6, overflow:'hidden', flexShrink:0 }}><CardImage product={p} style={{ width:40, height:40, objectFit:'cover' }} /></div>
                           : <div style={{ width:40, height:40, borderRadius:6, background:'var(--panel)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{cat?.icon || '📦'}</div>}
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:14, fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</div>
@@ -171,7 +172,7 @@ export function SalesModal({ products, categories, onClose }) {
                 return (
                   <div key={item.key} className="cart-item">
                     {getThumb(item)
-                      ? <img src={getThumb(item)} className="cart-item-img" alt={item.name} />
+                      ? <div style={{ flexShrink:0 }}><CardImage product={item} className="cart-item-img" /></div>
                       : <div className="cart-item-img" style={{ display:'flex', alignItems:'center', justifyContent:'center', fontSize:24 }}>{cat?.icon || '📦'}</div>
                     }
                     <div className="cart-item-info">

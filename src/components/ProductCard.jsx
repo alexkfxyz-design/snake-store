@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getThumb, useFullImage } from '../utils/images'
 import { TallasChips } from './TallasEditor'
+import { CardImage } from './CardImage'
 import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel } from '../utils/helpers'
 
 function ImageModal({ product, onClose }) {
@@ -25,7 +26,7 @@ export function ProductCard({ product, category, onClick }) {
         <div style={{ background:'#1a1a1a', position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center', minHeight:180 }}
           onClick={e => { if(thumb){ e.stopPropagation(); setShowImg(true) } }}>
           {thumb
-            ? <img src={thumb} alt={product.name} loading="lazy" decoding="async" style={{ width:'100%', objectFit:'contain', display:'block', cursor:'zoom-in' }} />
+            ? <div style={{ width:'100%' }}><CardImage product={product} style={{ width:'100%', objectFit:'contain', display:'block', cursor:'zoom-in' }} /></div>
             : <div style={{ height:180, width:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:48, opacity:.2 }}>{category?.icon||'📦'}</div>
           }
           {s !== 'ok' && <div style={{ position:'absolute', top:8, right:8, background:s==='out'?'var(--danger)':'var(--warning)', color:'#000', fontSize:10, fontWeight:700, borderRadius:20, padding:'3px 8px' }}>{s==='out'?'AGOTADO':'POCAS'}</div>}

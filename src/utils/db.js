@@ -45,24 +45,39 @@ export async function getProductImage(productId) {
 export const setProductImage = (productId, full) =>
   setDoc(doc(db, 'productImages', productId), { data: full, updatedAt: Date.now() })
 
-const deleteProductImage = productId =>
-  deleteDoc(doc(db, 'productImages', productId)).catch(() => {})
+export async function getProductCard(productId) {
+  const snap = await getDoc(doc(db, 'productCards', productId))
+  return snap.exists() ? snap.data().data : null
+}
+export const setProductCard = (productId, card) =>
+  setDoc(doc(db, 'productCards', productId), { data: card, updatedAt: Date.now() })
 
-// images = { full, thumb } (opcional, solo cuando se sube una imagen nueva)
+const deleteProductImage = productId => Promise.all([
+  deleteDoc(doc(db, 'productImages', productId)).catch(() => {}),
+  deleteDoc(doc(db, 'productCards',  productId)).catch(() => {}),
+])
+
+// images = { full, card, thumb } (opcional, solo cuando se sube una imagen nueva)
+const imageFields = images => {
+  const v = Date.now()
+  return { thumb: images.thumb, hasImage: true, hasCard: true, imageVersion: v, cardVersion: v }
+}
+
 export async function addProduct(data, images = null) {
-  const ref = await addDoc(collection(db, 'products'), {
-    ...data,
-    ...(images ? { thumb: images.thumb, hasImage: true, imageVersion: Date.now() } : {}),
-    createdAt: Date.now(),
-  })
-  if (images) await setProductImage(ref.id, images.full)
+  const ref = doc(collection(db, 'products'))
+  if (images) {
+    await setProductImage(ref.id, images.full)
+    await setProductCard(ref.id, images.card)
+  }
+  await setDoc(ref, { ...data, ...(images ? imageFields(images) : {}), createdAt: Date.now() })
   return ref.id
 }
 
 export async function updateProduct(id, data, images = null) {
   if (images) {
     await setProductImage(id, images.full)
-    data = { ...data, thumb: images.thumb, hasImage: true, imageVersion: Date.now(), image: deleteField() }
+    await setProductCard(id, images.card)
+    data = { ...data, ...imageFields(images), image: deleteField() }
   }
   return updateDoc(doc(db, 'products', id), data)
 }

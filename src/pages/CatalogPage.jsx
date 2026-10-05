@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Loading } from '../components/UI'
 import { subscribeProducts, subscribeCategories } from '../utils/db'
 import { getThumb, useFullImage } from '../utils/images'
+import { CardImage } from '../components/CardImage'
 import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel, getTallas, getTallasDisponibles } from '../utils/helpers'
 
 const WA_NUMBER = '51910999500'
@@ -222,7 +223,7 @@ export function CatalogPage({ onAdmin }) {
                   onMouseEnter={e => { e.currentTarget.style.transform='scale(1.02)'; e.currentTarget.style.borderColor='var(--accent)' }}
                   onMouseLeave={e => { e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.borderColor='var(--border)' }}>
                   {getThumb(p)
-                    ? <img src={getThumb(p)} alt={p.name} loading="lazy" decoding="async" style={{ width:'100%', display:'block', objectFit:'cover', minHeight:120, background:'#1a1a1a' }} />
+                    ? <CardImage product={p} style={{ width:'100%', display:'block', objectFit:'cover', minHeight:120, background:'#1a1a1a' }} />
                     : <div style={{ height:160, display:'flex', alignItems:'center', justifyContent:'center', fontSize:48, opacity:.2, background:'#1a1a1a' }}>{cat?.icon||'📦'}</div>
                   }
                   <div style={{ padding:'10px 12px' }}>
