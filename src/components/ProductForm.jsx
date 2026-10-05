@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Modal, Btn, Field } from './UI'
-import { addProduct, updateProduct } from '../utils/db'
+import { addProduct, updateProduct, deleteProduct } from '../utils/db'
 import { deleteField } from 'firebase/firestore'
 import { buildImages, getThumb } from '../utils/images'
 import { getTallas } from '../utils/helpers'
@@ -47,6 +47,16 @@ export function ProductForm({ categories, onClose, editing }) {
       if (suma !== stockNum) {
         if (!window.confirm(`Las tallas suman ${suma} unidades pero el stock dice ${stockNum}. ¿Guardar con stock = ${suma}?`)) return
       }
+    }
+    const stockFinal = tallas ? Object.values(tallas).reduce((a, b) => a + b, 0) : stockNum
+    if (stockFinal <= 0) {
+      if (!editing) { alert('Pon al menos 1 unidad. Los productos sin stock se eliminan automáticamente.'); return }
+      if (!window.confirm(`"${editing.name}" quedará sin stock y se ELIMINARÁ para siempre. ¿Continuar?`)) return
+      setSaving(true)
+      try { await deleteProduct(editing.id); onClose() }
+      catch (err) { alert('No se pudo eliminar: ' + (err.code || err.message)) }
+      setSaving(false)
+      return
     }
     setSaving(true)
     const data = {

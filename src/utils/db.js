@@ -3,7 +3,7 @@ import {
   collection, addDoc, updateDoc, deleteDoc,
   doc, onSnapshot, query, orderBy, where,
   Timestamp, writeBatch, increment,
-  getDoc, setDoc, deleteField
+  getDoc, setDoc, deleteField, getDocFromServer
 } from 'firebase/firestore'
 
 // ── Categorías ──────────────────────────────────
@@ -115,7 +115,30 @@ export async function registrarVenta(items) {
   })
 
   await batch.commit()
+
+  // Los productos que quedaron en 0 unidades se eliminan (con su imagen)
+  const ids = [...new Set(items.map(i => i.id))]
+  await Promise.all(ids.map(async id => {
+    try {
+      const snap = await getDocFromServer(doc(db, 'products', id))
+      if (snap.exists() && (snap.data().stock ?? 0) <= 0) await deleteProduct(id)
+    } catch (err) {
+      console.error('No se pudo eliminar el producto agotado', id, err)
+    }
+  }))
+
   return ventaRef.id
+}
+
+// Elimina todos los productos sin stock (botón del panel admin)
+export async function deleteOutOfStock(products) {
+  const agotados = products.filter(p => (p.stock ?? 0) <= 0)
+  let ok = 0, failed = 0
+  for (const p of agotados) {
+    try { await deleteProduct(p.id); ok++ }
+    catch (err) { console.error('No se pudo eliminar', p.id, err); failed++ }
+  }
+  return { ok, failed }
 }
 
 // Suscripción a ventas (tiempo real)

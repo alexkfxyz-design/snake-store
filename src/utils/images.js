@@ -4,7 +4,7 @@
 //  - imagen completa: guardada aparte en la colección "productImages" → solo se descarga al abrir el producto
 import { useEffect, useState } from 'react'
 import { getProductImage, setProductImage } from './db'
-import { doc, updateDoc, deleteField } from 'firebase/firestore'
+import { doc, updateDoc, deleteField, collection, query, orderBy, limit, startAfter, getDocsFromServer, documentId } from 'firebase/firestore'
 import { db } from './firebase'
 
 export const FULL_MAX   = 800
@@ -110,4 +110,38 @@ export async function migrateProductImages(products, onProgress = () => {}) {
     onProgress({ done, failed, total: pending.length })
   }
   return { done, failed, total: pending.length }
+}
+
+// Igual que la anterior, pero SIN necesitar la lista completa de productos:
+// recorre la colección de a pocos documentos (cada uno pesa como máximo ~1 MB),
+// así funciona aunque el catálogo completo sea demasiado pesado para cargar de una vez.
+export async function migrateAllInBatches(onProgress = () => {}, batchSize = 2) {
+  let last = null, scanned = 0, done = 0, failed = 0
+  while (true) {
+    const q = last
+      ? query(collection(db, 'products'), orderBy(documentId()), startAfter(last), limit(batchSize))
+      : query(collection(db, 'products'), orderBy(documentId()), limit(batchSize))
+    const snap = await getDocsFromServer(q)
+    if (snap.empty) break
+    for (const d of snap.docs) {
+      scanned++
+      const p = { id: d.id, ...d.data() }
+      if (needsImageMigration(p)) {
+        try {
+          const thumb = await resizeImage(p.image, THUMB_MAX, THUMB_Q)
+          await setProductImage(p.id, p.image)
+          await updateDoc(doc(db, 'products', p.id), {
+            thumb, hasImage: true, imageVersion: Date.now(), image: deleteField(),
+          })
+          done++
+        } catch (err) {
+          console.error('No se pudo migrar', p.id, err)
+          failed++
+        }
+      }
+      onProgress({ scanned, done, failed })
+    }
+    last = snap.docs[snap.docs.length - 1]
+  }
+  return { scanned, done, failed }
 }

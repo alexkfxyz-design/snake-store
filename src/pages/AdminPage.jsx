@@ -7,8 +7,8 @@ import { ProductForm }   from '../components/ProductForm'
 import { CategoryForm }  from '../components/CategoryForm'
 import { SalesModal }    from '../components/SalesModal'
 import { ReportsPage }   from './ReportsPage'
-import { subscribeProducts, subscribeCategories, subscribeVentas, deleteCategory } from '../utils/db'
-import { needsImageMigration, migrateProductImages } from '../utils/images'
+import { subscribeProducts, subscribeCategories, subscribeVentas, deleteCategory, deleteOutOfStock } from '../utils/db'
+import { needsImageMigration, migrateAllInBatches } from '../utils/images'
 // auth handled by Firebase '../utils/helpers'
 
 const VIEWS = ['products', 'categories', 'ventas', 'reportes']
@@ -28,14 +28,24 @@ export function AdminPage({ onLogout, onCatalog }) {
   const [showSales,  setShowSales]  = useState(false)
   const [migration,  setMigration]  = useState(null)   // { done, failed, total, running }
 
+  const [slowLoad,   setSlowLoad]   = useState(false)
+  const migrating = !!migration?.running
+
+  // Productos: se pausa la suscripción mientras se optimizan imágenes
   useEffect(() => {
+    if (migrating) return
+    const t  = setTimeout(() => setSlowLoad(true), 8000)
     const u1 = subscribeProducts(
-      data => { setProducts(data); setLoading(false) },
+      data => { setProducts(data); setLoading(false); setSlowLoad(false) },
       err  => { console.error('[Admin]', err); alert('Error al cargar productos: ' + (err.code || err.message)); setLoading(false) }
     )
+    return () => { clearTimeout(t); u1() }
+  }, [migrating])
+
+  useEffect(() => {
     const u2 = subscribeCategories(data => setCategories(data))
     const u3 = subscribeVentas(data     => setVentas(data))
-    return () => { u1(); u2(); u3() }
+    return () => { u2(); u3() }
   }, [])
 
   const filtered = products.filter(p => {
@@ -54,15 +64,52 @@ export function AdminPage({ onLogout, onCatalog }) {
   const ingresosHoy = ventasHoy.reduce((s, v) => s + (v.total || 0), 0)
 
   const pendingImages = products.filter(needsImageMigration).length
+  const [deletingOut, setDeletingOut] = useState(false)
 
-  async function runMigration() {
-    if (!window.confirm(`Se optimizarán ${pendingImages} producto(s). No cierres la página hasta que termine. ¿Continuar?`)) return
-    setMigration({ done:0, failed:0, total:pendingImages, running:true })
-    const res = await migrateProductImages(products, prog => setMigration({ ...prog, running:true }))
-    setMigration({ ...res, running:false })
+  async function eliminarAgotados() {
+    const n = stats.outStock
+    if (!window.confirm(`Se ELIMINARÁN para siempre ${n} producto(s) sin stock (con sus fotos). Las ventas pasadas no se borran. ¿Continuar?`)) return
+    setDeletingOut(true)
+    const { ok, failed } = await deleteOutOfStock(products)
+    setDeletingOut(false)
+    alert(`Eliminados: ${ok}${failed ? ` · Fallaron: ${failed}` : ''}`)
   }
 
-  if (loading) return <Loading text="Conectando con Firebase..." />
+  async function runMigration() {
+    if (!window.confirm('Se optimizarán las imágenes de todos los productos. No cierres la página hasta que termine. ¿Continuar?')) return
+    setMigration({ scanned:0, done:0, failed:0, running:true })
+    try {
+      const res = await migrateAllInBatches(prog => setMigration({ ...prog, running:true }))
+      setMigration({ ...res, running:false })
+    } catch (err) {
+      console.error(err)
+      setMigration(m => ({ ...m, running:false, error: err.code || err.message }))
+    }
+  }
+
+  // Pantalla de carga: si tarda, ofrecer la optimización sin esperar a que cargue todo
+  if (loading || migrating) return (
+    <div className="loading">
+      <div className="spinner" />
+      {migrating
+        ? <p style={{ color:'var(--muted)', fontSize:14, textAlign:'center' }}>
+            ⏳ Optimizando imágenes... revisados {migration.scanned}, optimizados {migration.done}{migration.failed ? `, fallaron ${migration.failed}` : ''}<br/>
+            <span style={{ fontSize:12 }}>No cierres esta página.</span>
+          </p>
+        : <>
+            <p style={{ color:'var(--muted)', fontSize:14 }}>Conectando con Firebase...</p>
+            {migration?.error && <p style={{ color:'var(--danger)', fontSize:13 }}>Error: {migration.error}. Puedes reintentar.</p>}
+            {(slowLoad || migration?.error) && (
+              <div style={{ maxWidth:420, textAlign:'center', marginTop:12 }}>
+                <p style={{ color:'var(--warning)', fontSize:13, marginBottom:12 }}>
+                  ⚡ Está tardando porque las imágenes de los productos son muy pesadas. Optimízalas una sola vez y todo cargará rápido.
+                </p>
+                <Btn onClick={runMigration}>Optimizar imágenes ahora</Btn>
+              </div>
+            )}
+          </>}
+    </div>
+  )
 
   return (
     <div className="app">
@@ -90,15 +137,21 @@ export function AdminPage({ onLogout, onCatalog }) {
         {(pendingImages > 0 || migration) && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', padding:'12px 16px', marginBottom:'1.25rem', borderRadius:'var(--r)', border:'1px solid var(--warning-b)', background:'var(--warning-bg)', color:'var(--warning)', fontSize:14 }}>
             <span>
-              {migration?.running
-                ? `⏳ Optimizando imágenes... ${migration.done + migration.failed} de ${migration.total}`
-                : migration && pendingImages === 0
+              {migration && pendingImages === 0
                   ? `✓ Imágenes optimizadas (${migration.done}). El catálogo ahora carga mucho más rápido.`
                   : `⚡ ${pendingImages} producto(s) tienen imágenes pesadas que hacen lento el catálogo.${migration?.failed ? ` (${migration.failed} fallaron, reintenta)` : ''}`}
             </span>
             {migration && !migration.running && pendingImages === 0
               ? <Btn variant="ghost" size="sm" onClick={() => setMigration(null)}>Cerrar</Btn>
-              : <Btn size="sm" onClick={runMigration} disabled={migration?.running}>{migration?.running ? 'Optimizando...' : 'Optimizar ahora'}</Btn>}
+              : <Btn size="sm" onClick={runMigration}>Optimizar ahora</Btn>}
+          </div>
+        )}
+
+        {/* Productos sin stock */}
+        {stats.outStock > 0 && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', padding:'12px 16px', marginBottom:'1.25rem', borderRadius:'var(--r)', border:'1px solid var(--danger-b)', background:'var(--danger-bg)', color:'var(--danger)', fontSize:14 }}>
+            <span>🗑 Hay {stats.outStock} producto(s) sin stock. Desde ahora se eliminan solos al vender la última unidad.</span>
+            <Btn variant="danger" size="sm" onClick={eliminarAgotados} disabled={deletingOut}>{deletingOut ? 'Eliminando...' : `Eliminar ${stats.outStock} agotados`}</Btn>
           </div>
         )}
 
