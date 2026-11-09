@@ -4,6 +4,7 @@ import { subscribeProducts, subscribeCategories } from '../utils/db'
 import { getThumb, useFullImage } from '../utils/images'
 import { CardImage } from '../components/CardImage'
 import { formatPrice, getStockStatus, getStockBadgeClass, getStockLabel, getTallas, getTallasDisponibles } from '../utils/helpers'
+import { BrandHeader } from '../components/Brand'
 
 const WA_NUMBER = '51910999500'
 
@@ -170,13 +171,13 @@ export function CatalogPage({ onAdmin }) {
   return (
     <div style={{ minHeight:'100vh', background:'var(--black)' }}>
       {/* Header */}
-      <header style={{ borderBottom:'1px solid var(--border)', padding:'12px 1.5rem', position:'sticky', top:0, background:'var(--black)', zIndex:100 }}>
+      <header style={{ borderBottom:'1px solid var(--accent-b)', boxShadow:'0 1px 18px rgba(124,240,92,.06)', padding:'10px 1.5rem 12px', position:'sticky', top:0, background:'rgba(10,12,11,.92)', backdropFilter:'blur(8px)', zIndex:100 }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-          <h1 style={{ fontFamily:'var(--fd)', fontSize:'clamp(20px, 5vw, 32px)', letterSpacing:'.12em', color:'var(--accent)', lineHeight:1 }}>UNDERGROUND STYLE</h1>
+          <h1 style={{ margin:0 }}><BrandHeader height={44} onClick={() => window.scrollTo({ top:0, behavior:'smooth' })} /></h1>
           <button onClick={onAdmin} style={{ color:'var(--muted)', fontSize:13, cursor:'pointer', background:'none', border:'none' }}>Admin ↗</button>
         </div>
         <input
-          style={{ width:'100%', background:'var(--panel)', border:'1px solid var(--border)', borderRadius:20, padding:'8px 16px', color:'var(--white)', fontSize:13, outline:'none' }}
+          className="catalog-search" style={{ width:'100%', background:'var(--panel)', border:'1px solid var(--border)', borderRadius:20, padding:'8px 16px', color:'var(--white)', fontSize:13, outline:'none' }}
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Buscar productos..."
@@ -253,7 +254,7 @@ export function CatalogPage({ onAdmin }) {
 
       {/* Footer */}
       <footer style={{ borderTop:'1px solid var(--border)', padding:'1.5rem', textAlign:'center', color:'var(--muted)', fontSize:13 }}>
-        <span style={{ fontFamily:'var(--fd)', fontSize:18, color:'var(--accent)', letterSpacing:'.1em', marginRight:10 }}>UNDERGROUND STYLE</span>
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:8 }}><BrandHeader height={34} /></div>
         Ropa y accesorios urbanos
       </footer>
 

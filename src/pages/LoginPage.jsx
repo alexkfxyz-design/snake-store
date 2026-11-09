@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Btn, Field } from '../components/UI'
 import { auth } from '../utils/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
+import { BrandLogo } from '../components/Brand'
 
 export function LoginPage({ onLogin, onCatalog }) {
   const [email, setEmail] = useState('')
@@ -36,7 +37,7 @@ export function LoginPage({ onLogin, onCatalog }) {
   return (
     <div className="login-page">
       <div className="login-box">
-        <h1 className="login-logo">UNDERGROUND</h1>
+        <h1 style={{ margin:'0 0 12px', textAlign:'center' }}><BrandLogo width={260} /></h1>
         <p className="login-sub">Panel de administración — solo personal autorizado</p>
 
         {error && <div className="login-error">⚠ {error}</div>}

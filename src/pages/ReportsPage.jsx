@@ -204,7 +204,7 @@ export function ReportsPage({ ventas }) {
               <XAxis dataKey="dia" tick={{ fill:'#888', fontSize:11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill:'#888', fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v => `S/${v}`} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="total" name="S/ Ingresos" fill="#e8ff3e" radius={[4,4,0,0]} />
+              <Bar dataKey="total" name="S/ Ingresos" fill="#7cf05c" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -234,7 +234,7 @@ export function ReportsPage({ ventas }) {
               <XAxis dataKey="hora" tick={{ fill:'#888', fontSize:10 }} axisLine={false} tickLine={false} interval={2} />
               <YAxis tick={{ fill:'#888', fontSize:11 }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="ventas" name="Ventas" stroke="#e8ff3e" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="ventas" name="Ventas" stroke="#7cf05c" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

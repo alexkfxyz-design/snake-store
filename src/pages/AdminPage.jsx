@@ -9,6 +9,7 @@ import { SalesModal }    from '../components/SalesModal'
 import { ReportsPage }   from './ReportsPage'
 import { subscribeProducts, subscribeCategories, subscribeVentas, deleteCategory, deleteOutOfStock } from '../utils/db'
 import { needsImageMigration, migrateAllInBatches, needsCardUpgrade, upgradeCardsInBatches } from '../utils/images'
+import { BrandHeader } from '../components/Brand'
 // auth handled by Firebase '../utils/helpers'
 
 const VIEWS = ['products', 'categories', 'ventas', 'reportes']
@@ -130,7 +131,7 @@ export function AdminPage({ onLogout, onCatalog }) {
       {/* Header */}
       <header className="header">
         <div style={{ display:'flex', alignItems:'center', gap:'1.25rem' }}>
-          <h1 className="header-logo">UNDERGROUND STYLE</h1>
+          <h1 style={{ margin:0 }}><BrandHeader height={42} onClick={() => setView('products')} /></h1>
           <span className="header-tag">Admin</span>
         </div>
         <nav className="header-nav" style={{ flexWrap:'wrap', gap:4 }}>

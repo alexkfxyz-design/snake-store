@@ -5,10 +5,12 @@ input,textarea,select{font-family:inherit}
 img{display:block;max-width:100%}
 
 :root{
-  --black:#0a0a0a;--off-black:#111;--panel:#161616;--panel2:#1e1e1e;
-  --border:#2a2a2a;--border-h:#3d3d3d;--white:#f5f5f5;--muted:#888;
-  --accent:#e8ff3e;--accent-h:#f0ff6e;--accent-dim:rgba(232,255,62,.12);--accent-b:rgba(232,255,62,.3);
-  --success:#44ff88;--success-bg:rgba(68,255,136,.1);--success-b:rgba(68,255,136,.3);
+  /* Paleta Underground Style: negro carbón + verde neón del logo */
+  --black:#0a0c0b;--off-black:#0f1211;--panel:#141816;--panel2:#1a1f1c;
+  --border:#252c28;--border-h:#36413a;--white:#f2f5f3;--muted:#87928b;
+  --accent:#7cf05c;--accent-h:#9df783;--accent-dim:rgba(124,240,92,.12);--accent-b:rgba(124,240,92,.35);
+  --accent-glow:0 0 12px rgba(124,240,92,.35);
+  --success:#2fd6a0;--success-bg:rgba(47,214,160,.1);--success-b:rgba(47,214,160,.3);
   --warning:#ffb400;--warning-bg:rgba(255,180,0,.1);--warning-b:rgba(255,180,0,.3);
   --danger:#ff4444;--danger-bg:rgba(255,68,68,.1);--danger-b:rgba(255,68,68,.3);
   --blue:#4488ff;--blue-bg:rgba(68,136,255,.1);--blue-b:rgba(68,136,255,.3);
@@ -21,7 +23,7 @@ body{background:var(--black);color:var(--white);font-family:var(--fb);min-height
 
 /* Inputs */
 .input{width:100%;background:var(--black);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--white);font-size:14px;outline:none;transition:border-color var(--tr)}
-.input:focus{border-color:var(--accent)}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
 .input::placeholder{color:var(--muted)}
 textarea.input{resize:vertical;min-height:80px}
 select.input{cursor:pointer}
@@ -34,7 +36,7 @@ select.input{cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--r);padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all var(--tr);font-family:var(--fb)}
 .btn:active{transform:scale(.97)}
 .btn-primary{background:var(--accent);color:var(--black);border:none}
-.btn-primary:hover{background:var(--accent-h)}
+.btn-primary:hover{background:var(--accent-h);box-shadow:var(--accent-glow)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
 .btn-ghost:hover{border-color:var(--border-h);color:var(--white)}
 .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
@@ -67,7 +69,7 @@ select.input{cursor:pointer}
 .modal-title{font-family:var(--fd);font-size:28px;letter-spacing:.1em;color:var(--accent);margin-bottom:1.5rem}
 
 /* Header */
-.header{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;background:var(--black);z-index:100}
+.header{border-bottom:1px solid var(--accent-b);box-shadow:0 1px 18px rgba(124,240,92,.06);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;background:var(--black);z-index:100}
 .header-logo{font-family:var(--fd);font-size:32px;letter-spacing:.12em;color:var(--accent);line-height:1}
 .header-tag{color:var(--muted);font-size:13px;border-left:1px solid var(--border);padding-left:1rem}
 .header-nav{display:flex;gap:4px;align-items:center}
@@ -136,7 +138,7 @@ select.input{cursor:pointer}
 
 /* Catalog product card */
 .cat-product-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;transition:all var(--tr)}
-.cat-product-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 32px rgba(232,255,62,.08)}
+.cat-product-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 32px rgba(124,240,92,.12)}
 .cat-product-img{height:200px;background:#1a1a1a;overflow:hidden;position:relative}
 .cat-product-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
 .cat-product-card:hover .cat-product-img img{transform:scale(1.04)}
@@ -212,3 +214,8 @@ select.input{cursor:pointer}
   .products-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
   .catalog-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 }
+
+/* Marca */
+@media (max-width:480px){ .brand-wordmark{ height:26px!important } }
+.catalog-search:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px var(--accent-dim)}
+.login-sub{text-align:center}

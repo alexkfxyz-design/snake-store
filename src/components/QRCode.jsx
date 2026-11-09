@@ -7,7 +7,7 @@ export function QRCode({ value, size = 140 }) {
     if (!ref.current || !value) return
     QRCodeLib.toCanvas(ref.current, value, {
       width: size,
-      color: { dark: '#0a0a0a', light: '#e8ff3e' },
+      color: { dark: '#0a0a0a', light: '#ffffff' },
       margin: 1,
     })
   }, [value, size])

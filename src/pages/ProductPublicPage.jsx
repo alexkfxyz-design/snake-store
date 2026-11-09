@@ -4,6 +4,7 @@ import { subscribeProduct, getCategory } from '../utils/db'
 import { useFullImage } from '../utils/images'
 import { TallasChips } from '../components/TallasEditor'
 import { formatPrice, getStockStatus, getStockLabel } from '../utils/helpers'
+import { BrandHeader } from '../components/Brand'
 
 export function ProductPublicPage({ productId, onBack }) {
   const [product,  setProduct]  = useState(null)
@@ -44,7 +45,7 @@ export function ProductPublicPage({ productId, onBack }) {
         <div className="pub-body">
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
             {category ? <span style={{ fontSize:14, color:'var(--accent)' }}>{category.icon} {category.name}</span> : <span />}
-            <span style={{ fontFamily:'var(--fd)', fontSize:13, letterSpacing:'.15em', color:'var(--muted)' }}>SNAKE STORE</span>
+            <BrandHeader height={28} />
           </div>
           <h1 className="pub-name">{product.name.toUpperCase()}</h1>
           <p className="pub-desc">{product.description||'Sin descripción disponible.'}</p>
