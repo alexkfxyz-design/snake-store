@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:firebase": "vite build --base=/",
+    "deploy:firebase": "vite build --base=/ && firebase deploy --only hosting",
     "preview": "vite preview"
   },
   "dependencies": {
